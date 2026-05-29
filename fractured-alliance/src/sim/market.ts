@@ -37,6 +37,14 @@ export function tickMarket(market: MarketState, tick: number): MarketState {
 
   for (const ore of ORE_IDS) {
     const base = next.basePrices[ore];
+    if (!Number.isFinite(base) || base <= 0) {
+      next.prices[ore] = 1;
+      continue;
+    }
+    const demand = next.demand[ore];
+    if (!Number.isFinite(demand)) {
+      next.demand[ore] = 1.0;
+    }
     const noise = (Math.random() - 0.5) * 0.04;
     const demandShift = (next.demand[ore] - 1.0) * 0.1;
     const newPrice = base * (1 + noise + demandShift);
@@ -76,6 +84,12 @@ export function buyOre(
   qty: number,
 ): TransactionResult {
   const price = market.prices[ore];
+  if (!Number.isFinite(price) || price <= 0) {
+    return { success: false, message: 'Invalid market price for ' + ore, newTreasury: treasury, newStockpile: stockpile };
+  }
+  if (!Number.isFinite(qty) || qty <= 0) {
+    return { success: false, message: 'Invalid quantity', newTreasury: treasury, newStockpile: stockpile };
+  }
   const cost = price * qty;
   if (cost > treasury) {
     return { success: false, message: 'Insufficient funds', newTreasury: treasury, newStockpile: stockpile };
@@ -90,10 +104,16 @@ export function sellOre(
   ore: OreKind,
   qty: number,
 ): TransactionResult {
+  const price = market.prices[ore];
+  if (!Number.isFinite(price) || price <= 0) {
+    return { success: false, message: 'Invalid market price for ' + ore, newTreasury: treasury, newStockpile: stockpile };
+  }
+  if (!Number.isFinite(qty) || qty <= 0) {
+    return { success: false, message: 'Invalid quantity', newTreasury: treasury, newStockpile: stockpile };
+  }
   if (qty > stockpile) {
     return { success: false, message: 'Insufficient ore', newTreasury: treasury, newStockpile: stockpile };
   }
-  const price = market.prices[ore];
   const revenue = price * qty;
   return { success: true, message: `Sold ${qty} ${ore}`, newTreasury: treasury + revenue, newStockpile: stockpile - qty };
 }

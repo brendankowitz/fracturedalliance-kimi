@@ -301,10 +301,24 @@ function FederalChannel({
 }
 
 function MerchantChannel({ market }: { market: MarketState }) {
-  const handleBuy = useCallback((_itemName: string, price: number) => {
+  const handleBuy = useCallback((itemName: string, price: number) => {
     const state = useGameStore.getState();
     if (state.treasury < price) return;
-    useGameStore.setState({ treasury: state.treasury - price });
+    const stock = state.market.merchantStock[itemName] ?? 0;
+    if (stock <= 0) {
+      alert('Item out of stock');
+      return;
+    }
+    useGameStore.setState({
+      treasury: state.treasury - price,
+      market: {
+        ...state.market,
+        merchantStock: {
+          ...state.market.merchantStock,
+          [itemName]: stock - 1,
+        },
+      },
+    });
   }, []);
 
   const merchantStockEntries = Object.entries(market.merchantStock);
@@ -425,8 +439,14 @@ function BlackMarketChannel() {
     (item: BlackMarketItem) => {
       const state = useGameStore.getState();
       if (state.treasury < item.price) return;
+      const stock = item.qty ?? 0;
+      if (stock <= 0) {
+        alert('Item out of stock');
+        return;
+      }
       useGameStore.setState({ treasury: state.treasury - item.price });
       addSuspicion(item.risk);
+      item.qty = stock - 1;
     },
     [addSuspicion]
   );

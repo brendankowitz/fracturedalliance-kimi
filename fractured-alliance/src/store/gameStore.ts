@@ -8,7 +8,8 @@ import { proposeTreaty as proposeTreatySim, breakTreaty as breakTreatySim } from
 import { serializeWorld, deserializeWorld } from '../sim/serialize';
 import { persistSave, loadSaveData, loadSettings, persistSettings, loadSaves } from './saveLoad';
 import { checkAchievements } from '../sim/achievements';
-import { ASTEROIDS, AGENTS } from '../data/gameData';
+import { ASTEROIDS, AGENTS, RACES } from '../data/gameData';
+import { createRelations } from '../sim/diplomacy';
 import { resolveMission } from '../sim/espionage';
 
 interface GameState {
@@ -176,7 +177,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   federationStanding: 62,
   saves: loadSaves(),
   market: createInitialMarket(),
-  relations: {},
+  relations: Object.fromEntries(
+    RACES.filter((r) => r.id !== 'helion').map((r) => [r.id, createRelations(r.id)])
+  ),
   achievements: [],
 
   setScreen: (s) => set({ screen: s }),
@@ -211,6 +214,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       events: world.world.events,
       alerts: world.events.length,
       relations: world.world.relations,
+      treasury: world.world.treasury,
+      suspicion: world.world.suspicion,
+      reputation: world.world.reputation,
+      federationStanding: world.world.federationStanding,
+      market: world.world.market,
     });
   },
 
