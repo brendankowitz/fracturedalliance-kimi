@@ -34,10 +34,9 @@ function treatyLabel(kind: TreatyKind): string {
 }
 
 function repColor(reputation: number): string {
-  if (reputation > 30) return 'var(--ally)';
-  if (reputation < -30) return 'var(--crit)';
-  if (reputation < 0) return 'var(--warn)';
-  return 'var(--signal)';
+  if (reputation >= 20) return 'var(--ally)';
+  if (reputation <= -20) return 'var(--crit)';
+  return 'var(--warn)';
 }
 
 /* ------------------------------------------------------------------ */
@@ -49,11 +48,15 @@ function RaceListItem({
   selected,
   onClick,
   reputation,
+  standing,
+  treaties,
 }: {
   race: RaceDef;
   selected: boolean;
   onClick: () => void;
   reputation: number;
+  standing: string;
+  treaties: TreatyKind[];
 }) {
   const color = repColor(reputation);
 
@@ -81,12 +84,12 @@ function RaceListItem({
         <div style={{ fontSize: 13, color: 'var(--fg-100)' }}>{race.name}</div>
         <div className="t-meta">{race.title}</div>
         <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
-          {race.treaties.length === 0 && (
+          {treaties.length === 0 && (
             <span className="t-meta" style={{ color: 'var(--fg-40)' }}>
               — no treaties —
             </span>
           )}
-          {race.treaties.map((t) => (
+          {treaties.map((t) => (
             <span key={t} className="tag" style={{ fontSize: 8, padding: '1px 5px' }}>
               {abbreviateTreaty(t)}
             </span>
@@ -98,7 +101,7 @@ function RaceListItem({
           {reputation > 0 ? '+' : ''}
           {reputation}
         </div>
-        <div className="t-meta">rep</div>
+        <div className="t-meta">{standing}</div>
       </div>
     </button>
   );
@@ -108,13 +111,13 @@ function RaceRoster({
   races,
   selected,
   onSelect,
-  reputation,
+  relations,
   federationStanding,
 }: {
   races: RaceDef[];
   selected: string;
   onSelect: (id: string) => void;
-  reputation: Record<string, number>;
+  relations: Record<string, import('../../sim/diplomacy').RaceRelations>;
   federationStanding: number;
 }) {
   const daysHeld = 28; // placeholder — could derive from save state later
@@ -151,15 +154,20 @@ function RaceRoster({
         <div className="t-eyebrow" style={{ marginBottom: 10 }}>
           RACES
         </div>
-        {races.map((r) => (
-          <RaceListItem
-            key={r.id}
-            race={r}
-            selected={selected === r.id}
-            onClick={() => onSelect(r.id)}
-            reputation={reputation[r.id] ?? r.reputation}
-          />
-        ))}
+        {races.map((r) => {
+          const rel = relations[r.id];
+          return (
+            <RaceListItem
+              key={r.id}
+              race={r}
+              selected={selected === r.id}
+              onClick={() => onSelect(r.id)}
+              reputation={rel?.reputation ?? 0}
+              standing={rel?.standing ?? 'neutral'}
+              treaties={rel?.treaties ?? []}
+            />
+          );
+        })}
       </div>
 
       <div style={{ padding: 14, borderTop: '1px solid var(--line-soft)' }}>
@@ -192,7 +200,15 @@ function RaceRoster({
   );
 }
 
-function TreatyRow({ kind, race }: { kind: TreatyKind; race: RaceDef }) {
+function TreatyRow({
+  kind,
+  race,
+  onBreak,
+}: {
+  kind: TreatyKind;
+  race: RaceDef;
+  onBreak: () => void;
+}) {
   return (
     <div
       className={`race-${race.id}`}
@@ -216,18 +232,38 @@ function TreatyRow({ kind, race }: { kind: TreatyKind; race: RaceDef }) {
         </div>
       </div>
       <div className="tag ally">ACTIVE</div>
-      <button className="btn sm ghost">▸</button>
+      <button className="btn sm ghost" onClick={onBreak}>
+        BREAK
+      </button>
     </div>
   );
 }
 
-function AmbassadorPanel({ race }: { race: RaceDef | undefined }) {
+const AVAILABLE_TREATIES: { kind: TreatyKind; label: string; threshold: number }[] = [
+  { kind: 'nonAggression', label: 'NAP', threshold: 0 },
+  { kind: 'trade', label: 'Trade', threshold: 20 },
+  { kind: 'defensivePact', label: 'Defensive', threshold: 40 },
+];
+
+function AmbassadorPanel({
+  race,
+  relations,
+  onPropose,
+  onBreak,
+}: {
+  race: RaceDef | undefined;
+  relations: Record<string, import('../../sim/diplomacy').RaceRelations>;
+  onPropose: (raceId: string, treaty: TreatyKind) => void;
+  onBreak: (raceId: string, treaty: TreatyKind) => void;
+}) {
   const updateReputation = useGameStore((s) => s.updateReputation);
-  const storeRep = useGameStore((s) => s.reputation);
 
   if (!race) return <section />;
 
-  const reputation = storeRep[race.id] ?? race.reputation;
+  const rel = relations[race.id];
+  const reputation = rel?.reputation ?? 0;
+  const standing = rel?.standing ?? 'neutral';
+  const activeTreaties = rel?.treaties ?? [];
   const color = repColor(reputation);
 
   const handleSendGift = useCallback(() => {
@@ -318,16 +354,15 @@ function AmbassadorPanel({ race }: { race: RaceDef | undefined }) {
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="t-label">federation</span>
+            <span className="t-label">standing</span>
             <span
               className="tag"
               style={{
-                color: race.id === 'mauna' ? 'var(--crit)' : 'var(--ally)',
-                borderColor:
-                  race.id === 'mauna' ? 'var(--crit-dim)' : 'var(--ally-dim)',
+                color: color,
+                borderColor: color,
               }}
             >
-              {race.id === 'mauna' ? '✕ OUTLAW' : '◉ MEMBER'}
+              {standing.toUpperCase()}
             </span>
           </div>
         </div>
@@ -591,7 +626,7 @@ function AmbassadorPanel({ race }: { race: RaceDef | undefined }) {
                   gap: 6,
                 }}
               >
-                {race.treaties.length === 0 && (
+                {activeTreaties.length === 0 && (
                   <div
                     style={{
                       padding: 12,
@@ -604,9 +639,71 @@ function AmbassadorPanel({ race }: { race: RaceDef | undefined }) {
                     — no active treaties —
                   </div>
                 )}
-                {race.treaties.map((t) => (
-                  <TreatyRow key={t} kind={t} race={race} />
+                {activeTreaties.map((t) => (
+                  <TreatyRow
+                    key={t}
+                    kind={t}
+                    race={race}
+                    onBreak={() => onBreak(race.id, t)}
+                  />
                 ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="t-eyebrow">AVAILABLE TREATIES</div>
+              <div
+                style={{
+                  marginTop: 10,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                }}
+              >
+                {AVAILABLE_TREATIES.map(({ kind, threshold }) => {
+                  const signed = activeTreaties.includes(kind);
+                  const canPropose = reputation >= threshold && !signed;
+                  return (
+                    <div
+                      key={kind}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr auto auto',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: '10px 12px',
+                        background: 'var(--bg-raised)',
+                        border: '1px solid var(--line-soft)',
+                        borderLeft: '2px solid var(--race-color)',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: 13, color: 'var(--fg-100)' }}>
+                          {treatyLabel(kind)}
+                        </div>
+                        <div className="t-meta">
+                          Requires reputation ≥ {threshold}
+                        </div>
+                      </div>
+                      {signed ? (
+                        <div className="tag ally">SIGNED</div>
+                      ) : (
+                        <div className="tag warn">NOT SIGNED</div>
+                      )}
+                      <button
+                        className="btn sm"
+                        disabled={!canPropose}
+                        onClick={() => onPropose(race.id, kind)}
+                        style={{
+                          opacity: canPropose ? 1 : 0.4,
+                          cursor: canPropose ? 'pointer' : 'not-allowed',
+                        }}
+                      >
+                        PROPOSE
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -620,14 +717,12 @@ function AmbassadorPanel({ race }: { race: RaceDef | undefined }) {
                   gap: 6,
                 }}
               >
-                <button className="btn sm">PROPOSE TREATY</button>
                 <button className="btn sm" onClick={handleSendGift}>
                   SEND GIFT (1,000 cr)
                 </button>
                 <button className="btn sm ghost" onClick={handleDemandTribute}>
                   DEMAND TRIBUTE
                 </button>
-                <button className="btn sm ghost">REPORT TO FED</button>
                 <button className="btn sm crit" onClick={handleDeclareWar}>
                   DECLARE WAR
                 </button>
@@ -659,45 +754,10 @@ function AmbassadorPanel({ race }: { race: RaceDef | undefined }) {
   );
 }
 
-function CouncilLog() {
-  const log = [
-    {
-      t: '0341.06',
-      kind: 'crit',
-      text: 'Kryll Collective: "Helion radiation pollution violates the Mining Pact, Section 4." (−5 standing)',
-    },
-    {
-      t: '0338.12',
-      kind: 'signal',
-      text: 'Achar Gatherings ratified Trade Agreement. +3 reputation.',
-    },
-    {
-      t: '0334.40',
-      kind: 'ally',
-      text: 'Federation: Quarterly Compliance Review. Result: Pass.',
-    },
-    {
-      t: '0331.18',
-      kind: 'warn',
-      text: 'Motkaj Clans demanded 40t Korellium tribute. Refused. Reputation −8.',
-    },
-    {
-      t: '0328.04',
-      kind: 'crit',
-      text: 'Brakkat Dominion warned of "doubled retaliation" after border incident.',
-    },
-    {
-      t: '0322.55',
-      kind: 'illegal',
-      text: 'Anonymous broker offered Mauna shipment route. Logged — no action taken.',
-    },
-    {
-      t: '0318.30',
-      kind: 'signal',
-      text: 'Rigal Conclave shared blueprint discount: Shield x40 (−50%).',
-    },
-    { t: '0312.00', kind: 'ally', text: 'NAP renewed with Achar (+2/mo. retainer).' },
-  ] as const;
+function CouncilLog({ events }: { events: import('../../sim/types').SimEvent[] }) {
+  const diploEvents = events.filter(
+    (e) => e.kind === 'ally' || e.kind === 'warn' || e.kind === 'crit'
+  );
 
   return (
     <aside
@@ -716,9 +776,21 @@ function CouncilLog() {
         </div>
       </div>
       <div style={{ overflowY: 'auto', flex: 1 }}>
-        {log.map((e, i) => (
+        {diploEvents.length === 0 && (
           <div
-            key={i}
+            style={{
+              padding: 16,
+              color: 'var(--fg-40)',
+              fontSize: 12,
+              textAlign: 'center',
+            }}
+          >
+            — no diplomatic events —
+          </div>
+        )}
+        {diploEvents.map((e, i) => (
+          <div
+            key={e.id ?? i}
             style={{
               padding: '12px 16px',
               borderBottom: '1px solid var(--line-soft)',
@@ -729,7 +801,7 @@ function CouncilLog() {
             }}
           >
             <div className="t-meta" style={{ paddingTop: 2 }}>
-              T+{e.t}
+              {e.t}
             </div>
             <div
               style={{
@@ -740,9 +812,7 @@ function CouncilLog() {
                       ? 'var(--warn)'
                       : e.kind === 'ally'
                         ? 'var(--ally)'
-                        : e.kind === 'illegal'
-                          ? 'var(--illegal)'
-                          : 'var(--fg-80)',
+                        : 'var(--fg-80)',
                 lineHeight: 1.4,
               }}
             >
@@ -764,7 +834,10 @@ export function Diplomacy() {
   const [selected, setSelected] = useState('kryll');
   const sel = races.find((r) => r.id === selected);
 
-  const reputation = useGameStore((s) => s.reputation);
+  const relations = useGameStore((s) => s.relations);
+  const proposeTreaty = useGameStore((s) => s.proposeTreaty);
+  const breakTreaty = useGameStore((s) => s.breakTreaty);
+  const events = useGameStore((s) => s.events);
   const federationStanding = useGameStore((s) => s.federationStanding);
 
   return (
@@ -780,11 +853,16 @@ export function Diplomacy() {
         races={races}
         selected={selected}
         onSelect={setSelected}
-        reputation={reputation}
+        relations={relations}
         federationStanding={federationStanding}
       />
-      <AmbassadorPanel race={sel} />
-      <CouncilLog />
+      <AmbassadorPanel
+        race={sel}
+        relations={relations}
+        onPropose={proposeTreaty}
+        onBreak={breakTreaty}
+      />
+      <CouncilLog events={events} />
     </div>
   );
 }
