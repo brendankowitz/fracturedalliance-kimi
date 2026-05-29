@@ -52,6 +52,7 @@ describe('gameStore', () => {
             { name: 'Mine Mk2', cell: '[7,3]', pct: 0, etaDays: 7, active: false },
             { name: 'Pleasure Dome', cell: '—', pct: 0, etaDays: 8, active: false, disabled: true, note: 'awaiting medical clear' },
           ],
+          fleets: [],
         },
       ],
       events: [],

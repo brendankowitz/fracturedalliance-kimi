@@ -1,4 +1,5 @@
 import type { OreKind } from '../types';
+import type { Fleet } from './fleet';
 
 export interface BuildingEffect {
   pwr: number;
@@ -37,6 +38,7 @@ export interface AsteroidState {
     disabled?: boolean;
     note?: string;
   }[];
+  fleets: Fleet[];
 }
 
 export interface SimEvent {
@@ -54,4 +56,5 @@ export interface WorldState {
   reputation: Record<string, number>;
   federationStanding: number;
   events: SimEvent[];
+  fleets: Fleet[];
 }

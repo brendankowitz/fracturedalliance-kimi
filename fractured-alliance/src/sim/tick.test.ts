@@ -13,6 +13,7 @@ function makeAsteroid(): AsteroidState {
     },
     placedBuildings: {},
     buildQueue: [],
+    fleets: [],
   };
 }
 
@@ -89,5 +90,16 @@ describe('tickAsteroid', () => {
 
     const result = tickAsteroid(asteroid, 1);
     expect(result.resources.ores.selenium).toBe(2);
+  });
+
+  it('spawns a fleet when shipyard construction completes', () => {
+    const asteroid = makeAsteroid();
+    asteroid.placedBuildings['0,0'] = { kind: 'shipyard', constructing: true, progress: 0.99 };
+    asteroid.buildQueue = [{ name: 'Ship Yard', cell: '[0,0]', pct: 99, etaDays: 0, active: true }];
+    asteroid.fleets = [];
+
+    const result = tickAsteroid(asteroid, 1);
+    expect(result.fleets).toHaveLength(1);
+    expect(result.fleets[0].ships[0].classId).toBe('scout');
   });
 });

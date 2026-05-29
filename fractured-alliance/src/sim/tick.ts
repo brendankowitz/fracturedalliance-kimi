@@ -1,5 +1,7 @@
 import type { AsteroidState, SimEvent, WorldState } from './types';
 import { getBuildingEffect } from './buildingEffects';
+import { createShip, createFleet } from './fleet';
+import { SHIP_CLASSES } from '../data/gameData';
 
 const TICKS_PER_DAY = 30;
 
@@ -9,6 +11,7 @@ export function tickAsteroid(state: AsteroidState, _tick: number): AsteroidState
     resources: { ...state.resources, ores: { ...state.resources.ores } },
     placedBuildings: { ...state.placedBuildings },
     buildQueue: state.buildQueue.map(q => ({ ...q })),
+    fleets: [...state.fleets],
   };
 
   // 1. Sum building effects
@@ -63,6 +66,22 @@ export function tickAsteroid(state: AsteroidState, _tick: number): AsteroidState
         if (active.pct >= 100) {
           building.constructing = false;
           next.buildQueue.shift();
+          if (building.kind === 'shipyard') {
+            const scoutDef = SHIP_CLASSES.find((s) => s.id === 'scout');
+            if (scoutDef) {
+              const ship = createShip(scoutDef, next.ownerId ?? 'helion', next.id);
+              const fleet = createFleet(`fleet-${next.id}`, `${next.id} Defence`, next.ownerId ?? 'helion', [ship]);
+              next.fleets = [...next.fleets, fleet];
+            }
+          }
+          if (building.kind === 'dock') {
+            const cruiserDef = SHIP_CLASSES.find((s) => s.id === 'cruiser');
+            if (cruiserDef) {
+              const ship = createShip(cruiserDef, next.ownerId ?? 'helion', next.id);
+              const fleet = createFleet(`fleet-${next.id}-cap`, `${next.id} Capital`, next.ownerId ?? 'helion', [ship]);
+              next.fleets = [...next.fleets, fleet];
+            }
+          }
         }
       }
     }

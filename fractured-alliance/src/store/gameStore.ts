@@ -77,6 +77,7 @@ const DEFAULT_ASTEROIDS: AsteroidState[] = [
       { name: 'Mine Mk2', cell: '[7,3]', pct: 0, etaDays: 7, active: false },
       { name: 'Pleasure Dome', cell: '—', pct: 0, etaDays: 8, active: false, disabled: true, note: 'awaiting medical clear' },
     ],
+    fleets: [],
   },
   {
     id: 'arch-ii',
@@ -84,6 +85,7 @@ const DEFAULT_ASTEROIDS: AsteroidState[] = [
     resources: { power: 0, food: 0, water: 0, air: 0, pop: 240, popCap: 300, happiness: 71, rad: 4, ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 } },
     placedBuildings: {},
     buildQueue: [],
+    fleets: [],
   },
   {
     id: 'forge-3',
@@ -91,6 +93,7 @@ const DEFAULT_ASTEROIDS: AsteroidState[] = [
     resources: { power: 0, food: 0, water: 0, air: 0, pop: 380, popCap: 400, happiness: 64, rad: 22, ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 } },
     placedBuildings: {},
     buildQueue: [],
+    fleets: [],
   },
   {
     id: 'kepler-7',
@@ -98,6 +101,7 @@ const DEFAULT_ASTEROIDS: AsteroidState[] = [
     resources: { power: 0, food: 0, water: 0, air: 0, pop: 90, popCap: 100, happiness: 88, rad: 2, ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 } },
     placedBuildings: {},
     buildQueue: [],
+    fleets: [],
   },
   {
     id: 'long-shot',
@@ -105,6 +109,7 @@ const DEFAULT_ASTEROIDS: AsteroidState[] = [
     resources: { power: 0, food: 0, water: 0, air: 0, pop: 0, popCap: 0, happiness: 50, rad: 38, ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 } },
     placedBuildings: {},
     buildQueue: [],
+    fleets: [],
   },
 ];
 
@@ -154,6 +159,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       reputation: state.reputation,
       federationStanding: state.federationStanding,
       events: state.events,
+      fleets: [],
     });
 
     set({
