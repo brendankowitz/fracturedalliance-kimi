@@ -1,27 +1,24 @@
 import { useState } from 'react';
 import { AGENTS, RACES } from '../../data/gameData';
+import { useGameStore } from '../../store/gameStore';
+import type { MissionType } from '../../sim/espionage';
 
 /* ------------------------------------------------------------------ */
-/*  Mission type definition                                            */
+/*  Mission definitions                                                */
 /* ------------------------------------------------------------------ */
-interface MissionType {
-  id: string;
+interface MissionDef {
+  id: MissionType;
   label: string;
   cost: string;
-  success: number;
-  gain: string;
   danger?: boolean;
 }
 
-const MISSION_TYPES: MissionType[] = [
-  { id: 'recon', label: 'Recon', cost: '0.5× fee', success: 78, gain: 'reveal grid' },
-  { id: 'tech', label: 'Tech-Steal', cost: '1.0× fee', success: 52, gain: '50% blueprint discount' },
-  { id: 'sabo-ls', label: 'Sabotage · Life-Support', cost: '1.4× fee', success: 38, gain: 'destroys colony', danger: true },
-  { id: 'sabo-pw', label: 'Sabotage · Power', cost: '1.2× fee', success: 56, gain: 'disables grid 12 days' },
-  { id: 'sabo-df', label: 'Sabotage · Defence', cost: '1.2× fee', success: 48, gain: 'disables turrets 8 days' },
-  { id: 'sabo-sh', label: 'Sabotage · Ship Yard', cost: '1.3× fee', success: 42, gain: 'halts production 16 days' },
-  { id: 'black', label: 'Blackmail', cost: '1.8× fee', success: 32, gain: 'tribute 6,000–18,000 cr', danger: true },
-  { id: 'flip', label: 'Liberate colony', cost: '2.0× fee', success: 26, gain: 'flips colony to Helion', danger: true },
+const MISSION_DEFS: MissionDef[] = [
+  { id: 'infiltrate', label: 'Infiltrate', cost: '0.5× fee' },
+  { id: 'stealTech', label: 'Steal Tech', cost: '1.0× fee' },
+  { id: 'sabotage', label: 'Sabotage', cost: '1.4× fee', danger: true },
+  { id: 'blackmail', label: 'Blackmail', cost: '1.8× fee', danger: true },
+  { id: 'liberate', label: 'Liberate colony', cost: '2.0× fee', danger: true },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -44,6 +41,7 @@ export function Espionage() {
   const agents = AGENTS;
   const [selectedAgent, setSelectedAgent] = useState('mira');
   const sel = agents.find((a) => a.id === selectedAgent);
+  const suspicion = useGameStore((s) => s.suspicion);
 
   return (
     <div
@@ -71,8 +69,9 @@ export function Espionage() {
         agents={agents}
         selected={selectedAgent}
         onSelect={setSelectedAgent}
+        suspicion={suspicion}
       />
-      <OperationsCenter agent={sel} missions={MISSION_TYPES} />
+      <OperationsCenter agent={sel} missions={MISSION_DEFS} />
       <CounterIntelLog />
     </div>
   );
@@ -85,10 +84,12 @@ function AgentRoster({
   agents,
   selected,
   onSelect,
+  suspicion,
 }: {
   agents: typeof AGENTS;
   selected: string;
   onSelect: (id: string) => void;
+  suspicion: number;
 }) {
   return (
     <aside
@@ -118,6 +119,24 @@ function AgentRoster({
         <div className="t-meta" style={{ marginTop: 6 }}>
           <span style={{ color: 'var(--illegal)' }}>OFF-BOOKS</span> · this screen
           does not exist
+        </div>
+      </div>
+
+      {/* Suspicion meter */}
+      <div style={{ padding: 14, borderBottom: '1px solid var(--line-soft)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <span className="t-meta">FEDERATION SUSPICION</span>
+          <span className="t-meta" style={{ color: suspicion > 60 ? 'var(--crit)' : 'var(--warn)' }}>
+            {suspicion}%
+          </span>
+        </div>
+        <div className="meter" style={{ height: 6 }}>
+          <div
+            style={{
+              width: `${suspicion}%`,
+              background: suspicion > 60 ? 'var(--crit)' : 'var(--warn)',
+            }}
+          />
         </div>
       </div>
 
@@ -310,10 +329,13 @@ function OperationsCenter({
   missions,
 }: {
   agent: (typeof AGENTS)[number] | undefined;
-  missions: MissionType[];
+  missions: MissionDef[];
 }) {
   const [target, setTarget] = useState('kryll');
-  const [selectedMission, setSelectedMission] = useState('recon');
+  const [selectedMission, setSelectedMission] = useState<MissionType>('infiltrate');
+  const [lastResult, setLastResult] = useState<string | null>(null);
+  const runMission = useGameStore((s) => s.runMission);
+  const treasury = useGameStore((s) => s.treasury);
 
   const races = RACES.filter((r) => r.id !== 'helion');
   const mission = missions.find((m) => m.id === selectedMission);
@@ -345,6 +367,18 @@ function OperationsCenter({
   const fee = Math.round(agent.fee * feeMultiplier);
   const detection = Math.round(100 - agent.stealth);
   const captureProb = Math.round((100 - agent.stealth) * 0.4);
+
+  const handleExecute = () => {
+    if (!agent || agent.status === 'captured') return;
+    if (treasury < fee) {
+      setLastResult('Insufficient treasury.');
+      return;
+    }
+    const targetRace = races.find((r) => r.id === target);
+    const targetSecurity = targetRace ? Math.max(0, 50 - (targetRace.reputation ?? 0) / 2) : 50;
+    const result = runMission(agent.id, selectedMission, targetSecurity);
+    setLastResult(result.message);
+  };
 
   return (
     <section
@@ -536,7 +570,7 @@ function OperationsCenter({
                   onClick={() => setSelectedMission(m.id)}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr auto auto',
+                    gridTemplateColumns: '1fr auto',
                     gap: 10,
                     padding: '7px 10px',
                     background:
@@ -556,20 +590,6 @@ function OperationsCenter({
                 >
                   <span>{m.label}</span>
                   <span className="t-meta">{m.cost}</span>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 10,
-                      color:
-                        m.success > 60
-                          ? 'var(--ally)'
-                          : m.success > 40
-                            ? 'var(--warn)'
-                            : 'var(--crit)',
-                    }}
-                  >
-                    {m.success}%
-                  </span>
                 </button>
               ))}
             </div>
@@ -602,9 +622,14 @@ function OperationsCenter({
                 className="stat-value"
                 style={{ color: 'var(--illegal)' }}
               >
-                {mission?.success ?? 0}%
+                {mission?.id === 'infiltrate' ? Math.round(agent.stealth * 0.3) :
+                 mission?.id === 'stealTech' ? Math.round(agent.intel * 0.3) :
+                 mission?.id === 'sabotage' ? Math.round(agent.sab * 0.3) :
+                 mission?.id === 'blackmail' ? Math.round(agent.intel * 0.2 + agent.stealth * 0.1) :
+                 mission?.id === 'liberate' ? Math.round(agent.sab * 0.2 + agent.stealth * 0.1) :
+                 0}%
               </div>
-              <div className="stat-label">SUCCESS</div>
+              <div className="stat-label">BONUS</div>
             </div>
             <div className="stat">
               <div className="stat-value" style={{ color: 'var(--warn)' }}>
@@ -630,7 +655,7 @@ function OperationsCenter({
             }}
           >
             <span style={{ color: 'var(--illegal)' }}>OBJECTIVE:</span>{' '}
-            {mission?.gain}.{' '}
+            {mission?.label}.{' '}
             <span style={{ color: 'var(--illegal)' }}>FALLBACK:</span> If detected
             and captured (p = {captureProb}%), agent reveals Helion as employer.{' '}
             <span style={{ color: 'var(--illegal)' }}>FED. PENALTY:</span>{' '}
@@ -639,8 +664,22 @@ function OperationsCenter({
               : '−20 standing, treaty breach fine 8,000 cr'}
             .
           </div>
+          {lastResult && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: 10,
+                background: 'oklch(0.18 0.04 330 / 0.4)',
+                border: '1px solid var(--illegal-dim)',
+                fontSize: 12,
+                color: 'var(--illegal)',
+              }}
+            >
+              {lastResult}
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-            <button className="btn illegal" style={{ flex: 1 }}>
+            <button className="btn illegal" style={{ flex: 1 }} onClick={handleExecute}>
               ▶ EXECUTE OPERATION
             </button>
             <button className="btn ghost">SAVE AS DRAFT</button>

@@ -90,6 +90,22 @@ export function tickAsteroid(state: AsteroidState, _tick: number): AsteroidState
     }
   }
 
+  // Happiness consequences
+  if (next.resources.happiness < 30 && next.resources.happiness >= 10) {
+    next.resources.food = Math.floor(next.resources.food * 0.5);
+  }
+  if (next.resources.happiness < 10) {
+    // Secession: clear buildings
+    next.placedBuildings = {};
+    next.buildQueue = [];
+  }
+
+  // Asteroid stability decay
+  const engineCount = Object.values(next.placedBuildings).filter(b => b.kind === 'engine').length;
+  if (engineCount > 0) {
+    next.resources.rad += engineCount * 0.5;
+  }
+
   return next;
 }
 

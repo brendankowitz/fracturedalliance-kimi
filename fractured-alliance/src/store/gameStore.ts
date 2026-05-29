@@ -6,7 +6,8 @@ import { tickWorld, createInitialMarket } from '../sim/tick';
 import { buyOre as buyOreSim, sellOre as sellOreSim } from '../sim/market';
 import { proposeTreaty as proposeTreatySim, breakTreaty as breakTreatySim } from '../sim/diplomacy';
 import { loadSettings, persistSettings, loadSaves } from './saveLoad';
-import { ASTEROIDS } from '../data/gameData';
+import { ASTEROIDS, AGENTS } from '../data/gameData';
+import { resolveMission } from '../sim/espionage';
 
 interface GameState {
   screen: ScreenId;
@@ -41,6 +42,7 @@ interface GameState {
   purchaseBlueprint: (id: string, cost: number) => boolean;
   updateReputation: (raceId: string, delta: number) => void;
   addSuspicion: (amount: number) => void;
+  runMission: (agentId: string, mission: import('../sim/espionage').MissionType, targetSecurity: number) => import('../sim/espionage').MissionResult;
   loadSave: (slot: number) => void;
   buyOre: (ore: OreKind, qty: number) => void;
   sellOre: (ore: OreKind, qty: number) => void;
@@ -243,6 +245,18 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   addSuspicion: (amount) =>
     set((state) => ({ suspicion: Math.min(100, state.suspicion + amount) })),
+
+  runMission: (agentId: string, mission: import('../sim/espionage').MissionType, targetSecurity: number) => {
+    const state = get();
+    const agent = AGENTS.find((a) => a.id === agentId);
+    if (!agent) return { success: false, message: 'Agent not found', suspicionGain: 0, creditsGain: 0 };
+    const result = resolveMission(agent.stealth, agent.sab, agent.intel, mission, targetSecurity);
+    set({
+      suspicion: Math.min(100, state.suspicion + result.suspicionGain),
+      treasury: state.treasury + result.creditsGain,
+    });
+    return result;
+  },
 
   loadSave: (_slot) => {
     set({ screen: 'sector', tick: 341 });
