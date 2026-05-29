@@ -1,58 +1,61 @@
-import { useGameStore } from './gameStore';
-import type { SaveSlot } from '../types';
+import type { SaveData } from '../sim/serialize';
 
-const SAVE_KEY = 'fa_saves';
-const SETTINGS_KEY = 'fa_settings';
+const SAVE_KEY = 'fa-saves';
+const SETTINGS_KEY = 'fa-settings';
 
-export function loadSaves(): SaveSlot[] {
+export interface SaveSlot {
+  slot: number;
+  name: string;
+  day: number | null;
+  verdict: string | null;
+  stamp: string | null;
+}
+
+export function loadSettings(): any {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return [
-    { slot: 1, name: 'Forge-3 push', day: 341, verdict: 'In progress', stamp: '2026-05-27 14:02' },
-    { slot: 2, name: 'Achar trade run', day: 180, verdict: 'Won — Corporate', stamp: '2026-05-25 22:18' },
-    { slot: 3, name: 'Kryll war', day: 87, verdict: 'Lost — Asteroid Ram', stamp: '2026-05-22 09:44' },
-    { slot: 4, name: '— empty —', day: null, verdict: null, stamp: null },
-  ];
+    return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+  } catch {
+    return null;
+  }
 }
 
-export function persistSaves(saves: SaveSlot[]) {
-  localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
-}
-
-export function loadSettings() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return null;
-}
-
-export function persistSettings(settings: object) {
+export function persistSettings(settings: any) {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
-export function autoSave() {
-  const state = useGameStore.getState();
-  const snapshot = {
-    tick: state.tick,
-    treasury: state.treasury,
-    reputation: state.reputation,
-    federationStanding: state.federationStanding,
-    blueprintsOwned: state.blueprintsOwned,
-    suspicion: state.suspicion,
-    asteroids: state.asteroids,
-    events: state.events,
-    selectedAsteroid: state.selectedAsteroid,
-  };
-  localStorage.setItem('fa_autosave', JSON.stringify(snapshot));
+export function loadSaves(): SaveSlot[] {
+  try {
+    return JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  } catch {
+    return [
+      { slot: 1, name: '— empty —', day: null, verdict: null, stamp: null },
+      { slot: 2, name: '— empty —', day: null, verdict: null, stamp: null },
+      { slot: 3, name: '— empty —', day: null, verdict: null, stamp: null },
+      { slot: 4, name: '— empty —', day: null, verdict: null, stamp: null },
+    ];
+  }
 }
 
-export function loadAutoSave(): object | null {
+export function persistSave(slot: number, data: SaveData) {
+  const saves = loadSaves();
+  const idx = saves.findIndex((s) => s.slot === slot);
+  const entry: SaveSlot = {
+    slot,
+    name: data.name,
+    day: data.day,
+    verdict: data.verdict,
+    stamp: data.stamp,
+  };
+  if (idx >= 0) saves[idx] = entry;
+  else saves.push(entry);
+  localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
+  localStorage.setItem(`fa-save-${slot}`, JSON.stringify(data));
+}
+
+export function loadSaveData(slot: number): SaveData | null {
   try {
-    const raw = localStorage.getItem('fa_autosave');
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return null;
+    return JSON.parse(localStorage.getItem(`fa-save-${slot}`) || 'null');
+  } catch {
+    return null;
+  }
 }

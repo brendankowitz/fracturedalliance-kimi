@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import type { ScreenId, GameSettings, SaveSlot, OreKind, TreatyKind } from '../types';
-import type { AsteroidState, SimEvent } from '../sim/types';
+import type { AsteroidState, SimEvent, WorldState } from '../sim/types';
 import type { MarketState } from '../sim/market';
 import { tickWorld, createInitialMarket } from '../sim/tick';
 import { buyOre as buyOreSim, sellOre as sellOreSim } from '../sim/market';
 import { proposeTreaty as proposeTreatySim, breakTreaty as breakTreatySim } from '../sim/diplomacy';
-import { loadSettings, persistSettings, loadSaves } from './saveLoad';
+import { serializeWorld, deserializeWorld } from '../sim/serialize';
+import { persistSave, loadSaveData, loadSettings, persistSettings, loadSaves } from './saveLoad';
 import { ASTEROIDS, AGENTS } from '../data/gameData';
 import { resolveMission } from '../sim/espionage';
 
@@ -44,6 +45,7 @@ interface GameState {
   addSuspicion: (amount: number) => void;
   runMission: (agentId: string, mission: import('../sim/espionage').MissionType, targetSecurity: number) => import('../sim/espionage').MissionResult;
   loadSave: (slot: number) => void;
+  saveGame: (slot: number, name: string) => void;
   buyOre: (ore: OreKind, qty: number) => void;
   sellOre: (ore: OreKind, qty: number) => void;
 }
@@ -258,8 +260,48 @@ export const useGameStore = create<GameState>((set, get) => ({
     return result;
   },
 
-  loadSave: (_slot) => {
-    set({ screen: 'sector', tick: 341 });
+  loadSave: (slot) => {
+    const data = loadSaveData(slot);
+    if (!data) {
+      set({ screen: 'sector' });
+      return;
+    }
+    const parsed = deserializeWorld(JSON.stringify(data));
+    if (!parsed.success || !parsed.data) {
+      set({ screen: 'sector' });
+      return;
+    }
+    set({
+      screen: 'sector',
+      tick: parsed.data.world.tick,
+      treasury: parsed.data.world.treasury,
+      asteroids: parsed.data.world.asteroids,
+      suspicion: parsed.data.world.suspicion,
+      reputation: parsed.data.world.reputation,
+      federationStanding: parsed.data.world.federationStanding,
+      events: parsed.data.world.events,
+      market: parsed.data.world.market,
+      relations: parsed.data.world.relations,
+    });
+  },
+  saveGame: (slot: number, name: string) => {
+    const state = get();
+    const world: WorldState = {
+      tick: state.tick,
+      treasury: state.treasury,
+      asteroids: state.asteroids,
+      suspicion: state.suspicion,
+      reputation: state.reputation,
+      federationStanding: state.federationStanding,
+      events: state.events,
+      fleets: [],
+      market: state.market,
+      relations: state.relations,
+    };
+    const json = serializeWorld(world, name);
+    const data = deserializeWorld(json).data!;
+    persistSave(slot, data);
+    set({ saves: loadSaves() });
   },
 
   buyOre: (ore, qty) => {

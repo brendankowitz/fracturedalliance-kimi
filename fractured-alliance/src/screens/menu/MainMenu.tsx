@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { SAVES } from '../../data/gameData';
 
 interface Scenario {
   id: string;
@@ -21,9 +20,20 @@ const SCENARIOS: Scenario[] = [
 export function MainMenu() {
   const [hoveredScenario, setHovered] = useState('expedition');
   const setScreen = useGameStore((s) => s.setScreen);
+  const saves = useGameStore((s) => s.saves);
+  const loadSave = useGameStore((s) => s.loadSave);
 
   const handleEnter = () => {
     setScreen('sector');
+  };
+
+  const handleContinue = () => {
+    const first = saves.find((sv) => sv.day !== null && sv.day !== undefined);
+    if (first) {
+      loadSave(first.slot);
+    } else {
+      setScreen('sector');
+    }
   };
 
   return (
@@ -72,8 +82,8 @@ export function MainMenu() {
 > last command: ASTEROID ARCH-I :: queue mk2-mine`
           }</pre>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button className="btn primary" onClick={handleEnter}>▶ RESUME MATCH</button>
-            <button className="btn">+ NEW MATCH</button>
+            <button className="btn primary" onClick={handleContinue}>▶ CONTINUE</button>
+            <button className="btn" onClick={handleEnter}>+ NEW MATCH</button>
             <button className="btn ghost">TUTORIAL</button>
             <button className="btn ghost">SETTINGS</button>
           </div>
@@ -132,8 +142,12 @@ export function MainMenu() {
               </tr>
             </thead>
             <tbody>
-              {SAVES.map((sv) => (
-                <tr key={sv.slot} style={{ color: sv.name === '— empty —' ? 'var(--fg-40)' : 'var(--fg-80)' }}>
+              {saves.map((sv) => (
+                <tr
+                  key={sv.slot}
+                  style={{ color: sv.name === '— empty —' ? 'var(--fg-40)' : 'var(--fg-80)', cursor: 'pointer' }}
+                  onClick={() => sv.day !== null && sv.day !== undefined && loadSave(sv.slot)}
+                >
                   <td style={{ padding: '8px', borderBottom: '1px solid var(--line-soft)' }}>{String(sv.slot).padStart(2, '0')}</td>
                   <td style={{ padding: '8px', borderBottom: '1px solid var(--line-soft)' }}>{sv.name}</td>
                   <td style={{ padding: '8px', borderBottom: '1px solid var(--line-soft)', textAlign: 'right' }}>{sv.day ?? '—'}</td>
@@ -146,8 +160,8 @@ export function MainMenu() {
                     )}
                   </td>
                   <td style={{ padding: '8px', borderBottom: '1px solid var(--line-soft)', textAlign: 'right' }}>
-                    {sv.day !== null && sv.day !== undefined && (
-                      <button className="btn sm ghost" onClick={handleEnter}>LOAD ▸</button>
+                    {sv.stamp && (
+                      <span className="t-meta">{sv.stamp}</span>
                     )}
                   </td>
                 </tr>
