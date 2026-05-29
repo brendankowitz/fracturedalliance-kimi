@@ -6,7 +6,7 @@ import { useGameStore } from '../../store/gameStore';
 import type { Fleet, ShipInstance } from '../../sim/fleet';
 
 function ShipChip({ ship }: { ship: ShipInstance }) {
-  const hpPct = Math.round((ship.hp / ship.maxHp) * 100);
+  const hpPct = ship.maxHp > 0 ? Math.round((ship.hp / ship.maxHp) * 100) : 0;
   const shieldPct = ship.maxShield > 0 ? Math.round((ship.shield / ship.maxShield) * 100) : 0;
   return (
     <div style={{
@@ -177,8 +177,8 @@ function TacticalViewport({ playerFleets, enemyFleets }: { playerFleets: Fleet[]
         <g>
           {/* Kryll capital */}
           <g transform="translate(68, 42)">
-            <foreignObject x="-3.5" y="-3.5" width="7" height="7" transform="rotate(180)">
-              <div style={{ color: 'var(--crit)', display: 'flex' }}>
+            <foreignObject x="-3.5" y="-3.5" width="7" height="7">
+              <div style={{ color: 'var(--crit)', display: 'flex', transform: 'rotate(180deg)', transformOrigin: 'center' }}>
                 <ShipGlyph kind="destructor" size={7} />
               </div>
             </foreignObject>
@@ -188,8 +188,8 @@ function TacticalViewport({ playerFleets, enemyFleets }: { playerFleets: Fleet[]
           {/* picket */}
           {[[62,40],[60,44],[64,46],[58,42]].map(([x,y], i) => (
             <g key={i} transform={`translate(${x}, ${y})`}>
-              <foreignObject x="-2" y="-2" width="4" height="4" transform="rotate(180)">
-                <div style={{ color: 'var(--crit)', opacity: 0.9, display: 'flex' }}>
+              <foreignObject x="-2" y="-2" width="4" height="4">
+                <div style={{ color: 'var(--crit)', opacity: 0.9, display: 'flex', transform: 'rotate(180deg)', transformOrigin: 'center' }}>
                   <ShipGlyph kind="eagle" size={4} />
                 </div>
               </foreignObject>
@@ -198,10 +198,10 @@ function TacticalViewport({ playerFleets, enemyFleets }: { playerFleets: Fleet[]
         </g>
 
         {/* Tracers */}
-        <line x1="50" y1="42" x2="60" y2="44" stroke="var(--warn)" strokeWidth="0.18" opacity="0.7" />
-        <line x1="47" y1="44" x2="62" y2="40" stroke="var(--warn)" strokeWidth="0.18" opacity="0.5" />
-        <line x1="64" y1="46" x2="44" y2="46" stroke="var(--crit)" strokeWidth="0.22" opacity="0.6" />
-        <line x1="60" y1="44" x2="38" y2="55" stroke="var(--crit)" strokeWidth="0.18" opacity="0.45" />
+        <line key="tracer-1" x1="50" y1="42" x2="60" y2="44" stroke="var(--warn)" strokeWidth="0.18" opacity="0.7" />
+        <line key="tracer-2" x1="47" y1="44" x2="62" y2="40" stroke="var(--warn)" strokeWidth="0.18" opacity="0.5" />
+        <line key="tracer-3" x1="64" y1="46" x2="44" y2="46" stroke="var(--crit)" strokeWidth="0.22" opacity="0.6" />
+        <line key="tracer-4" x1="60" y1="44" x2="38" y2="55" stroke="var(--crit)" strokeWidth="0.18" opacity="0.45" />
 
         {/* Wreckage marker */}
         <g transform="translate(53, 48)">

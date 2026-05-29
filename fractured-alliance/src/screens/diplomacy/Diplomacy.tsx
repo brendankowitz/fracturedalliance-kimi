@@ -258,6 +258,18 @@ function AmbassadorPanel({
 }) {
   const updateReputation = useGameStore((s) => s.updateReputation);
 
+  const handleSendGift = useCallback(() => {
+    if (race) updateReputation(race.id, 5);
+  }, [race, updateReputation]);
+
+  const handleDemandTribute = useCallback(() => {
+    if (race) updateReputation(race.id, -8);
+  }, [race, updateReputation]);
+
+  const handleDeclareWar = useCallback(() => {
+    if (race) updateReputation(race.id, -40);
+  }, [race, updateReputation]);
+
   if (!race) return <section />;
 
   const rel = relations[race.id];
@@ -265,18 +277,6 @@ function AmbassadorPanel({
   const standing = rel?.standing ?? 'neutral';
   const activeTreaties = rel?.treaties ?? [];
   const color = repColor(reputation);
-
-  const handleSendGift = useCallback(() => {
-    updateReputation(race.id, 5);
-  }, [race.id, updateReputation]);
-
-  const handleDemandTribute = useCallback(() => {
-    updateReputation(race.id, -8);
-  }, [race.id, updateReputation]);
-
-  const handleDeclareWar = useCallback(() => {
-    updateReputation(race.id, -40);
-  }, [race.id, updateReputation]);
 
   return (
     <section
