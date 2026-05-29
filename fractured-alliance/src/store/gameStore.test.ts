@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
 import { useGameStore } from './gameStore';
 
 describe('gameStore', () => {
@@ -8,6 +9,52 @@ describe('gameStore', () => {
       blueprintsOwned: ['mk2mine'],
       reputation: { kryll: 0 },
       suspicion: 0,
+      tick: 341,
+      paused: true,
+      asteroids: [
+        {
+          id: 'arch-i',
+          ownerId: 'helion',
+          resources: {
+            power: 12, food: 8, water: 12, air: 4,
+            pop: 480, popCap: 700, happiness: 78, rad: 8,
+            ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 },
+          },
+          placedBuildings: {
+            '4,4': { kind: 'cpu' },
+            '3,4': { kind: 'air' },
+            '5,4': { kind: 'hydration' },
+            '4,3': { kind: 'living' },
+            '4,5': { kind: 'living' },
+            '3,3': { kind: 'power1' },
+            '5,5': { kind: 'power1' },
+            '2,4': { kind: 'mine1' },
+            '6,4': { kind: 'mine2' },
+            '3,5': { kind: 'hydroponics' },
+            '5,3': { kind: 'medical' },
+            '2,3': { kind: 'storage' },
+            '6,5': { kind: 'storage' },
+            '2,5': { kind: 'laser' },
+            '6,3': { kind: 'laser' },
+            '4,6': { kind: 'silo' },
+            '1,4': { kind: 'deep' },
+            '7,4': { kind: 'security' },
+            '4,2': { kind: 'resiblock' },
+            '3,6': { kind: 'pleasure', damaged: true },
+            '1,3': { kind: 'mine1', constructing: true, progress: 0.55 },
+            '1,5': { kind: 'mine1', constructing: true, progress: 0.32 },
+          },
+          buildQueue: [
+            { name: 'Mine Mk1', cell: '[1,3]', pct: 55, etaDays: 2, active: true },
+            { name: 'Mine Mk1', cell: '[1,5]', pct: 32, etaDays: 3, active: true },
+            { name: 'Storage Tower', cell: '[7,5]', pct: 0, etaDays: 4, active: false },
+            { name: 'Laser Turret', cell: '[3,2]', pct: 0, etaDays: 5, active: false },
+            { name: 'Mine Mk2', cell: '[7,3]', pct: 0, etaDays: 7, active: false },
+            { name: 'Pleasure Dome', cell: '—', pct: 0, etaDays: 8, active: false, disabled: true, note: 'awaiting medical clear' },
+          ],
+        },
+      ],
+      events: [],
     });
   });
 
@@ -53,5 +100,21 @@ describe('gameStore', () => {
     useGameStore.setState({ tick: 100, paused: true });
     useGameStore.getState().advanceTick();
     expect(useGameStore.getState().tick).toBe(100);
+  });
+
+  it('advanceTick runs simulation and updates resources', () => {
+    const { result } = renderHook(() => useGameStore());
+    act(() => result.current.setPaused(false));
+    const initialPower = result.current.asteroids[0].resources.power;
+    act(() => result.current.advanceTick());
+    expect(result.current.asteroids[0].resources.power).not.toBe(initialPower);
+    expect(result.current.tick).toBe(342);
+  });
+
+  it('placeBuilding adds a building to the selected asteroid', () => {
+    useGameStore.setState({ selectedAsteroid: 'arch-i' });
+    useGameStore.getState().placeBuilding('2,2', 'mine2');
+    const asteroid = useGameStore.getState().asteroids[0];
+    expect(asteroid.placedBuildings['2,2']).toEqual({ kind: 'mine2', constructing: true, progress: 0 });
   });
 });

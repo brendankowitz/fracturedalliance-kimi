@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import type { ScreenId, GameSettings, SaveSlot, PlacedBuilding, BuildQueueItem } from '../types';
+import type { ScreenId, GameSettings, SaveSlot } from '../types';
+import type { AsteroidState, SimEvent } from '../sim/types';
+import { tickWorld } from '../sim/tick';
 import { loadSettings, persistSettings, loadSaves } from './saveLoad';
 
 interface GameState {
@@ -12,8 +14,8 @@ interface GameState {
   settings: GameSettings;
   selectedAsteroid: string;
   selectedBuilding: string | null;
-  placedBuildings: Record<string, PlacedBuilding>;
-  buildQueue: BuildQueueItem[];
+  asteroids: AsteroidState[];
+  events: SimEvent[];
   blueprintsOwned: string[];
   suspicion: number;
   reputation: Record<string, number>;
@@ -34,38 +36,76 @@ interface GameState {
   loadSave: (slot: number) => void;
 }
 
-const DEFAULT_PLACED: Record<string, PlacedBuilding> = {
-  '4,4': { kind: 'cpu' },
-  '3,4': { kind: 'air' },
-  '5,4': { kind: 'hydration' },
-  '4,3': { kind: 'living' },
-  '4,5': { kind: 'living' },
-  '3,3': { kind: 'power1' },
-  '5,5': { kind: 'power1' },
-  '2,4': { kind: 'mine1' },
-  '6,4': { kind: 'mine2' },
-  '3,5': { kind: 'hydroponics' },
-  '5,3': { kind: 'medical' },
-  '2,3': { kind: 'storage' },
-  '6,5': { kind: 'storage' },
-  '2,5': { kind: 'laser' },
-  '6,3': { kind: 'laser' },
-  '4,6': { kind: 'silo' },
-  '1,4': { kind: 'deep' },
-  '7,4': { kind: 'security' },
-  '4,2': { kind: 'resiblock' },
-  '3,6': { kind: 'pleasure', damaged: true },
-  '1,3': { kind: 'mine1', constructing: true, progress: 0.55 },
-  '1,5': { kind: 'mine1', constructing: true, progress: 0.32 },
-};
-
-const DEFAULT_QUEUE: BuildQueueItem[] = [
-  { name: 'Mine Mk1', cell: '[1,3]', pct: 55, eta: '2d', active: true },
-  { name: 'Mine Mk1', cell: '[1,5]', pct: 32, eta: '3d', active: true },
-  { name: 'Storage Tower', cell: '[7,5]', pct: 0, eta: '4d', active: false },
-  { name: 'Laser Turret', cell: '[3,2]', pct: 0, eta: '5d', active: false },
-  { name: 'Mine Mk2', cell: '[7,3]', pct: 0, eta: '7d', active: false },
-  { name: 'Pleasure Dome', cell: '—', pct: 0, eta: '8d', active: false, disabled: true, note: 'awaiting medical clear' },
+const DEFAULT_ASTEROIDS: AsteroidState[] = [
+  {
+    id: 'arch-i',
+    ownerId: 'helion',
+    resources: {
+      power: 12, food: 8, water: 12, air: 4,
+      pop: 480, popCap: 700, happiness: 78, rad: 8,
+      ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 },
+    },
+    placedBuildings: {
+      '4,4': { kind: 'cpu' },
+      '3,4': { kind: 'air' },
+      '5,4': { kind: 'hydration' },
+      '4,3': { kind: 'living' },
+      '4,5': { kind: 'living' },
+      '3,3': { kind: 'power1' },
+      '5,5': { kind: 'power1' },
+      '2,4': { kind: 'mine1' },
+      '6,4': { kind: 'mine2' },
+      '3,5': { kind: 'hydroponics' },
+      '5,3': { kind: 'medical' },
+      '2,3': { kind: 'storage' },
+      '6,5': { kind: 'storage' },
+      '2,5': { kind: 'laser' },
+      '6,3': { kind: 'laser' },
+      '4,6': { kind: 'silo' },
+      '1,4': { kind: 'deep' },
+      '7,4': { kind: 'security' },
+      '4,2': { kind: 'resiblock' },
+      '3,6': { kind: 'pleasure', damaged: true },
+      '1,3': { kind: 'mine1', constructing: true, progress: 0.55 },
+      '1,5': { kind: 'mine1', constructing: true, progress: 0.32 },
+    },
+    buildQueue: [
+      { name: 'Mine Mk1', cell: '[1,3]', pct: 55, etaDays: 2, active: true },
+      { name: 'Mine Mk1', cell: '[1,5]', pct: 32, etaDays: 3, active: true },
+      { name: 'Storage Tower', cell: '[7,5]', pct: 0, etaDays: 4, active: false },
+      { name: 'Laser Turret', cell: '[3,2]', pct: 0, etaDays: 5, active: false },
+      { name: 'Mine Mk2', cell: '[7,3]', pct: 0, etaDays: 7, active: false },
+      { name: 'Pleasure Dome', cell: '—', pct: 0, etaDays: 8, active: false, disabled: true, note: 'awaiting medical clear' },
+    ],
+  },
+  {
+    id: 'arch-ii',
+    ownerId: 'helion',
+    resources: { power: 0, food: 0, water: 0, air: 0, pop: 240, popCap: 300, happiness: 71, rad: 4, ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 } },
+    placedBuildings: {},
+    buildQueue: [],
+  },
+  {
+    id: 'forge-3',
+    ownerId: 'helion',
+    resources: { power: 0, food: 0, water: 0, air: 0, pop: 380, popCap: 400, happiness: 64, rad: 22, ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 } },
+    placedBuildings: {},
+    buildQueue: [],
+  },
+  {
+    id: 'kepler-7',
+    ownerId: 'helion',
+    resources: { power: 0, food: 0, water: 0, air: 0, pop: 90, popCap: 100, happiness: 88, rad: 2, ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 } },
+    placedBuildings: {},
+    buildQueue: [],
+  },
+  {
+    id: 'long-shot',
+    ownerId: 'helion',
+    resources: { power: 0, food: 0, water: 0, air: 0, pop: 0, popCap: 0, happiness: 50, rad: 38, ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 } },
+    placedBuildings: {},
+    buildQueue: [],
+  },
 ];
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -83,8 +123,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   selectedAsteroid: 'arch-i',
   selectedBuilding: 'mine2',
-  placedBuildings: DEFAULT_PLACED,
-  buildQueue: DEFAULT_QUEUE,
+  asteroids: DEFAULT_ASTEROIDS,
+  events: [],
   blueprintsOwned: ['mk2mine', 'mk2deep', 'seismic', 'hep', 'powamp', 'sensor'],
   suspicion: 42,
   reputation: {
@@ -105,7 +145,23 @@ export const useGameStore = create<GameState>((set, get) => ({
   advanceTick: () => {
     const state = get();
     if (state.paused) return;
-    set({ tick: state.tick + 1 });
+
+    const world = tickWorld({
+      tick: state.tick,
+      treasury: state.treasury,
+      asteroids: state.asteroids,
+      suspicion: state.suspicion,
+      reputation: state.reputation,
+      federationStanding: state.federationStanding,
+      events: state.events,
+    });
+
+    set({
+      tick: world.world.tick,
+      asteroids: world.world.asteroids,
+      events: world.world.events,
+      alerts: world.events.length,
+    });
   },
 
   setSettings: (s) => {
@@ -119,9 +175,19 @@ export const useGameStore = create<GameState>((set, get) => ({
   setSelectedBuilding: (id) => set({ selectedBuilding: id }),
 
   placeBuilding: (cell, kind) => {
-    set((state) => ({
-      placedBuildings: { ...state.placedBuildings, [cell]: { kind, constructing: true, progress: 0 } },
-    }));
+    set((state) => {
+      const idx = state.asteroids.findIndex(a => a.id === state.selectedAsteroid);
+      if (idx === -1) return state;
+      const next = [...state.asteroids];
+      next[idx] = {
+        ...next[idx],
+        placedBuildings: {
+          ...next[idx].placedBuildings,
+          [cell]: { kind, constructing: true, progress: 0 },
+        },
+      };
+      return { asteroids: next };
+    });
   },
 
   purchaseBlueprint: (id, cost) => {

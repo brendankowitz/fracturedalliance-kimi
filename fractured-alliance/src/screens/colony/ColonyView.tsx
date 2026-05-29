@@ -18,8 +18,8 @@ const CATS = [
 export function ColonyView() {
   const selectedBuilding = useGameStore((s) => s.selectedBuilding);
   const setSelectedBuilding = useGameStore((s) => s.setSelectedBuilding);
-  const placed = useGameStore((s) => s.placedBuildings);
-  const buildQueue = useGameStore((s) => s.buildQueue);
+  const placed = useGameStore((s) => s.asteroids.find(a => a.id === s.selectedAsteroid)?.placedBuildings ?? {});
+  const buildQueue = useGameStore((s) => s.asteroids.find(a => a.id === s.selectedAsteroid)?.buildQueue ?? []);
   const [hoverCell, setHoverCell] = useState<string | null>(null);
 
   const sel = BUILDINGS.find((b) => b.id === selectedBuilding) ?? null;
@@ -586,7 +586,7 @@ function ColonySidebar({
     name: string;
     cell: string;
     pct: number;
-    eta: string;
+    etaDays: number;
     active?: boolean;
     disabled?: boolean;
     note?: string;
@@ -706,7 +706,7 @@ function QueueItem({
   name,
   cell,
   pct,
-  eta,
+  etaDays,
   active,
   disabled,
   note,
@@ -714,7 +714,7 @@ function QueueItem({
   name: string;
   cell: string;
   pct: number;
-  eta: string;
+  etaDays: number;
   active?: boolean;
   disabled?: boolean;
   note?: string;
@@ -749,7 +749,7 @@ function QueueItem({
           color: active ? 'var(--warn)' : 'var(--fg-40)',
         }}
       >
-        {eta}
+        {etaDays}d
       </div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <button

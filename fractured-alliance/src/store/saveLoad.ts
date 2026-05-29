@@ -42,8 +42,8 @@ export function autoSave() {
     federationStanding: state.federationStanding,
     blueprintsOwned: state.blueprintsOwned,
     suspicion: state.suspicion,
-    placedBuildings: state.placedBuildings,
-    buildQueue: state.buildQueue,
+    asteroids: state.asteroids,
+    events: state.events,
     selectedAsteroid: state.selectedAsteroid,
   };
   localStorage.setItem('fa_autosave', JSON.stringify(snapshot));

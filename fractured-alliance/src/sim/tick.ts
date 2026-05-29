@@ -3,7 +3,7 @@ import { getBuildingEffect } from './buildingEffects';
 
 const TICKS_PER_DAY = 30;
 
-export function tickAsteroid(state: AsteroidState, tick: number): AsteroidState {
+export function tickAsteroid(state: AsteroidState, _tick: number): AsteroidState {
   const next: AsteroidState = {
     ...state,
     resources: { ...state.resources, ores: { ...state.resources.ores } },
@@ -20,7 +20,7 @@ export function tickAsteroid(state: AsteroidState, tick: number): AsteroidState 
   let netHappiness = 0;
   let netRad = 0;
 
-  for (const [cell, building] of Object.entries(next.placedBuildings)) {
+  for (const [, building] of Object.entries(next.placedBuildings)) {
     if (building.constructing) continue;
     const fx = getBuildingEffect(building.kind);
     netPwr += fx.pwr;
