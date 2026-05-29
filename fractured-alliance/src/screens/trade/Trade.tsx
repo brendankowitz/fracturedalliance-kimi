@@ -1,10 +1,19 @@
 import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { ORES, MERCHANT_STOCK, BLACK_MARKET } from '../../data/gameData';
-import type { OreDef, MerchantItem, BlackMarketItem } from '../../types';
+import { ORES, BLACK_MARKET } from '../../data/gameData';
+import type { OreDef, BlackMarketItem } from '../../types';
+import type { AsteroidState } from '../../sim/types';
+import type { MarketState } from '../../sim/market';
+import type { OreKind } from '../../types';
 
 export function Trade() {
   const [channel, setChannel] = useState<'federal' | 'merchant' | 'black'>('federal');
+
+  const market = useGameStore((s) => s.market);
+  const asteroid = useGameStore((s) => s.asteroids.find((a) => a.id === s.selectedAsteroid));
+  const treasury = useGameStore((s) => s.treasury);
+  const buyOre = useGameStore((s) => s.buyOre);
+  const sellOre = useGameStore((s) => s.sellOre);
 
   return (
     <div className="screen screen-enter" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', height: '100%' }}>
@@ -18,7 +27,7 @@ export function Trade() {
           <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
             <div className="t-meta">treasury</div>
             <TreasuryDisplay />
-            <div className="stat-delta up">▲ +1,820 / day</div>
+            <div className="stat-delta up">▲ LIVE</div>
           </div>
         </div>
 
@@ -33,15 +42,24 @@ export function Trade() {
 
         {/* Main content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 22 }}>
-          {channel === 'federal' && <FederalChannel ores={ORES} />}
-          {channel === 'merchant' && <MerchantChannel />}
+          {channel === 'federal' && (
+            <FederalChannel
+              ores={ORES}
+              market={market}
+              asteroid={asteroid}
+              treasury={treasury}
+              buyOre={buyOre}
+              sellOre={sellOre}
+            />
+          )}
+          {channel === 'merchant' && <MerchantChannel market={market} />}
           {channel === 'black' && <BlackMarketChannel />}
         </div>
       </section>
 
       <aside style={{ background: 'var(--bg-base)', overflowY: 'auto' }}>
-        <CargoStockpile ores={ORES} />
-        <RecentTrades />
+        <CargoStockpile ores={ORES} asteroid={asteroid} market={market} />
+        <MarketStatus market={market} />
       </aside>
     </div>
   );
@@ -116,17 +134,21 @@ function ChannelTab({
   );
 }
 
-function FederalChannel({ ores }: { ores: OreDef[] }) {
-  const handleSellAll = useCallback(
-    (value: number) => {
-      const state = useGameStore.getState();
-      // Directly mutate treasury via internal set by re-creating the state update
-      // Since there's no dedicated addTreasury, we patch it via set:
-      useGameStore.setState({ treasury: state.treasury + value });
-    },
-    []
-  );
-
+function FederalChannel({
+  ores,
+  market,
+  asteroid,
+  treasury,
+  buyOre,
+  sellOre,
+}: {
+  ores: OreDef[];
+  market: MarketState;
+  asteroid: AsteroidState | undefined;
+  treasury: number;
+  buyOre: (ore: OreKind, qty: number) => void;
+  sellOre: (ore: OreKind, qty: number) => void;
+}) {
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 22 }}>
@@ -184,21 +206,22 @@ function FederalChannel({ ores }: { ores: OreDef[] }) {
               <th style={{ ...th, textAlign: 'right' }}>FED PRICE</th>
               <th style={{ ...th, textAlign: 'right' }}>30D</th>
               <th style={{ ...th, textAlign: 'right' }}>VALUE</th>
+              <th style={{ ...th, textAlign: 'center' }}>BUY</th>
               <th style={{ ...th, textAlign: 'center' }}>SELL</th>
             </tr>
           </thead>
           <tbody>
             {ores.map((o) => {
-              const stock =
-                [320, 180, 940, 412, 88, 240, 56, 28, 12, 2][o.tier - 1] +
-                Math.floor(Math.random() * 300);
-              const fedPrice = Math.round(o.price * 0.7);
-              const trend = ['barium', 'crystalite', 'dragonium'].includes(o.id)
-                ? 'up'
-                : ['korellium'].includes(o.id)
-                  ? 'down'
-                  : 'flat';
+              const stock = asteroid?.resources.ores[o.id] ?? 0;
+              const livePrice = market.prices[o.id] ?? o.price;
+              const fedPrice = Math.round(livePrice * 0.7);
+              const demand = market.demand[o.id] ?? 1.0;
+              const trend = demand > 1.02 ? 'up' : demand < 0.98 ? 'down' : 'flat';
               const value = stock * fedPrice;
+              const canBuy1 = treasury >= fedPrice * 1;
+              const canBuy10 = treasury >= fedPrice * 10;
+              const canSell1 = stock >= 1;
+              const canSell10 = stock >= 10;
               return (
                 <tr key={o.id} style={{ borderTop: '1px solid var(--line-soft)' }}>
                   <td style={td}>
@@ -228,9 +251,44 @@ function FederalChannel({ ores }: { ores: OreDef[] }) {
                     {value.toLocaleString()}
                   </td>
                   <td style={{ ...td, textAlign: 'center' }}>
-                    <button className="btn sm" onClick={() => handleSellAll(value)}>
-                      SELL ALL
-                    </button>
+                    <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                      <button
+                        className="btn sm"
+                        disabled={!canBuy1}
+                        onClick={() => buyOre(o.id, 1)}
+                        style={{ opacity: canBuy1 ? 1 : 0.4 }}
+                      >
+                        BUY 1
+                      </button>
+                      <button
+                        className="btn sm"
+                        disabled={!canBuy10}
+                        onClick={() => buyOre(o.id, 10)}
+                        style={{ opacity: canBuy10 ? 1 : 0.4 }}
+                      >
+                        BUY 10
+                      </button>
+                    </div>
+                  </td>
+                  <td style={{ ...td, textAlign: 'center' }}>
+                    <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                      <button
+                        className="btn sm"
+                        disabled={!canSell1}
+                        onClick={() => sellOre(o.id, 1)}
+                        style={{ opacity: canSell1 ? 1 : 0.4 }}
+                      >
+                        SELL 1
+                      </button>
+                      <button
+                        className="btn sm"
+                        disabled={!canSell10}
+                        onClick={() => sellOre(o.id, 10)}
+                        style={{ opacity: canSell10 ? 1 : 0.4 }}
+                      >
+                        SELL 10
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -242,21 +300,25 @@ function FederalChannel({ ores }: { ores: OreDef[] }) {
   );
 }
 
-function MerchantChannel() {
-  const stock = MERCHANT_STOCK;
-
-  const handleBuy = useCallback((item: MerchantItem) => {
+function MerchantChannel({ market }: { market: MarketState }) {
+  const handleBuy = useCallback((_itemName: string, price: number) => {
     const state = useGameStore.getState();
-    if (state.treasury < item.price) return;
-    useGameStore.setState({ treasury: state.treasury - item.price });
+    if (state.treasury < price) return;
+    useGameStore.setState({ treasury: state.treasury - price });
   }, []);
+
+  const merchantStockEntries = Object.entries(market.merchantStock);
+  const arrivalTick = market.merchantArrivalTick;
+  const cycleLength = 150;
+  const daysSinceArrival = market.merchantActive ? 0 : Math.max(0, (useGameStore.getState().tick - arrivalTick));
+  const daysUntilNext = cycleLength - (daysSinceArrival % cycleLength);
 
   return (
     <div>
       <div className="panel" style={{ marginBottom: 22 }}>
         <div className="panel-head">
-          <span>CONVOY DOCKED · ARCH-I</span>
-          <span className="head-meta">departs in 6 days</span>
+          <span>{market.merchantActive ? 'CONVOY DOCKED · ARCH-I' : 'NO CONVOY DOCKED'}</span>
+          <span className="head-meta">{market.merchantActive ? 'departs in 6 days' : `next arrival ~${daysUntilNext} days`}</span>
         </div>
         <div className="panel-body" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 22, alignItems: 'center' }}>
           <div
@@ -287,11 +349,19 @@ function MerchantChannel() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 500 }}>Captain Aviv-7 Reska</div>
-            <div className="t-meta">Achar-flagged independent · reputation neutral · 4 holds</div>
-            <p style={{ fontSize: 12, color: 'var(--fg-80)', marginTop: 10, lineHeight: 1.55 }}>
-              "We don't pick sides. We pick prices. Two days fuel reserve. What are you buying?"
-            </p>
+            <div style={{ fontSize: 18, fontWeight: 500 }}>
+              {market.merchantActive ? 'Captain Aviv-7 Reska' : 'Merchant Away'}
+            </div>
+            <div className="t-meta">
+              {market.merchantActive
+                ? 'Achar-flagged independent · reputation neutral · 4 holds'
+                : 'No merchant docked. Next arrival estimated in ' + daysUntilNext + ' days.'}
+            </div>
+            {market.merchantActive && (
+              <p style={{ fontSize: 12, color: 'var(--fg-80)', marginTop: 10, lineHeight: 1.55 }}>
+                "We don't pick sides. We pick prices. Two days fuel reserve. What are you buying?"
+              </p>
+            )}
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
               <button className="btn sm">BARTER</button>
               <button className="btn sm ghost">REPUTATION CHECK</button>
@@ -306,34 +376,41 @@ function MerchantChannel() {
           <span>INVENTORY</span>
           <span className="head-meta">no re-dock refill</span>
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-          <thead>
-            <tr style={{ color: 'var(--fg-40)', background: 'var(--bg-raised)' }}>
-              <th style={th}>ITEM</th>
-              <th style={{ ...th, textAlign: 'right' }}>QTY</th>
-              <th style={{ ...th, textAlign: 'right' }}>PRICE</th>
-              <th style={th}>TAGS</th>
-              <th style={{ ...th, textAlign: 'right' }}>ACTION</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stock.map((i) => (
-              <tr key={i.id} style={{ borderTop: '1px solid var(--line-soft)' }}>
-                <td style={td}>
-                  <span style={{ color: 'var(--fg-100)' }}>{i.name}</span>
-                </td>
-                <td style={{ ...td, textAlign: 'right' }}>{i.qty}</td>
-                <td style={{ ...td, textAlign: 'right', color: 'var(--warn)' }}>{i.price.toLocaleString()} cr</td>
-                <td style={td}>{i.rare && <span className="tag warn">RARE</span>}</td>
-                <td style={{ ...td, textAlign: 'right' }}>
-                  <button className="btn sm" onClick={() => handleBuy(i)}>
-                    BUY · 1
-                  </button>
-                </td>
+        {market.merchantActive && merchantStockEntries.length > 0 ? (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+            <thead>
+              <tr style={{ color: 'var(--fg-40)', background: 'var(--bg-raised)' }}>
+                <th style={th}>ITEM</th>
+                <th style={{ ...th, textAlign: 'right' }}>QTY</th>
+                <th style={{ ...th, textAlign: 'right' }}>PRICE</th>
+                <th style={{ ...th, textAlign: 'right' }}>ACTION</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {merchantStockEntries.map(([name, qty]: [string, number]) => {
+                const pricePerUnit = name === 'luxury' ? 1100 : name === 'tools' ? 320 : name === 'medkit' ? 240 : name === 'antiv' ? 4800 : 500;
+                return (
+                  <tr key={name} style={{ borderTop: '1px solid var(--line-soft)' }}>
+                    <td style={td}>
+                      <span style={{ color: 'var(--fg-100)' }}>{name.charAt(0).toUpperCase() + name.slice(1)}</span>
+                    </td>
+                    <td style={{ ...td, textAlign: 'right' }}>{qty}</td>
+                    <td style={{ ...td, textAlign: 'right', color: 'var(--warn)' }}>{pricePerUnit.toLocaleString()} cr</td>
+                    <td style={{ ...td, textAlign: 'right' }}>
+                      <button className="btn sm" onClick={() => handleBuy(name, pricePerUnit)}>
+                        BUY · 1
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <div className="panel-body">
+            <div className="t-meta">No items available.</div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -483,14 +560,23 @@ function PriceSparkline() {
   );
 }
 
-function CargoStockpile({ ores }: { ores: OreDef[] }) {
+function CargoStockpile({
+  ores,
+  asteroid,
+  market,
+}: {
+  ores: OreDef[];
+  asteroid: AsteroidState | undefined;
+  market: MarketState;
+}) {
   return (
     <div style={{ padding: 18, borderBottom: '1px solid var(--line-soft)' }}>
       <div className="t-eyebrow">STOCKPILE · ALL ASTEROIDS</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
-        {ores.slice(0, 7).map((o, i) => {
-          const stock = [840, 620, 440, 280, 160, 90, 22][i];
+        {ores.slice(0, 7).map((o) => {
+          const stock = asteroid?.resources.ores[o.id] ?? 0;
           const cap = 1000;
+          const price = market.prices[o.id] ?? o.price;
           return (
             <div key={o.id}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
@@ -501,10 +587,11 @@ function CargoStockpile({ ores }: { ores: OreDef[] }) {
                 <span className="t-data" style={{ color: 'var(--fg-100)' }}>
                   {stock}
                   <span style={{ color: 'var(--fg-40)' }}>/{cap}t</span>
+                  <span style={{ color: 'var(--fg-40)', marginLeft: 6 }}>@ {price} cr</span>
                 </span>
               </div>
               <div className="meter" style={{ marginTop: 4, height: 3 }}>
-                <div style={{ width: `${(stock / cap) * 100}%`, background: o.color }} />
+                <div style={{ width: `${Math.min(100, (stock / cap) * 100)}%`, background: o.color }} />
               </div>
             </div>
           );
@@ -514,39 +601,34 @@ function CargoStockpile({ ores }: { ores: OreDef[] }) {
   );
 }
 
-function RecentTrades() {
-  const trades = [
-    { t: '0341.06', side: 'SOLD', item: '320t Crystalite', price: '+8,512 cr', channel: 'fed', color: 'var(--ally)' },
-    { t: '0339.40', side: 'BOUGHT', item: 'Spy Satellite', price: '−2,600 cr', channel: 'merch', color: 'var(--warn)' },
-    { t: '0337.18', side: 'SOLD', item: '12t Korellium', price: '+1,180 cr', channel: 'fed', color: 'var(--ally)' },
-    { t: '0334.02', side: 'BOUGHT', item: 'Nexos (raw) × 1', price: '−1,450 cr', channel: 'BLACK', color: 'var(--illegal)' },
-    { t: '0331.55', side: 'SOLD', item: '180t Barium', price: '+3,024 cr', channel: 'merch', color: 'var(--ally)' },
-  ];
+function MarketStatus({ market }: { market: MarketState }) {
+  const keyOres = ['crystalite', 'dragonium', 'korellium', 'barium'] as OreKind[];
   return (
     <div style={{ padding: 18 }}>
-      <div className="t-eyebrow">RECENT LEDGER</div>
+      <div className="t-eyebrow">MARKET TICK</div>
       <div style={{ marginTop: 14, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-        {trades.map((tr, i) => (
-          <div
-            key={i}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'auto 1fr auto',
-              gap: 10,
-              padding: '8px 0',
-              borderBottom: '1px solid var(--line-soft)',
-            }}
-          >
-            <div className="t-meta">T+{tr.t}</div>
-            <div>
-              <div style={{ color: 'var(--fg-100)' }}>{tr.item}</div>
-              <div className="t-meta">
-                {tr.side} · {tr.channel}
-              </div>
+        {keyOres.map((ore) => {
+          const price = market.prices[ore] ?? 0;
+          const demand = market.demand[ore] ?? 1.0;
+          const arrow = demand > 1.0 ? '▲' : demand < 1.0 ? '▼' : '—';
+          const color = demand > 1.0 ? 'var(--ally)' : demand < 1.0 ? 'var(--crit)' : 'var(--fg-60)';
+          return (
+            <div
+              key={ore}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto auto',
+                gap: 10,
+                padding: '8px 0',
+                borderBottom: '1px solid var(--line-soft)',
+              }}
+            >
+              <div style={{ color: 'var(--fg-100)', textTransform: 'capitalize' }}>{ore}</div>
+              <div style={{ color: 'var(--warn)' }}>{price.toLocaleString()} cr</div>
+              <div style={{ color, fontWeight: 500 }}>{arrow}</div>
             </div>
-            <div style={{ color: tr.color, fontWeight: 500 }}>{tr.price}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

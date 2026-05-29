@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ScreenId, GameSettings, SaveSlot, OreKind } from '../types';
-import type { AsteroidState, SimEvent, MarketState } from '../sim/types';
+import type { AsteroidState, SimEvent } from '../sim/types';
+import type { MarketState } from '../sim/market';
 import { tickWorld, createInitialMarket } from '../sim/tick';
 import { buyOre as buyOreSim, sellOre as sellOreSim } from '../sim/market';
 import { loadSettings, persistSettings, loadSaves } from './saveLoad';
