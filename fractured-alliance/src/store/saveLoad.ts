@@ -37,19 +37,24 @@ export function loadSaves(): SaveSlot[] {
 }
 
 export function persistSave(slot: number, data: SaveData) {
-  const saves = loadSaves();
-  const idx = saves.findIndex((s) => s.slot === slot);
-  const entry: SaveSlot = {
-    slot,
-    name: data.name,
-    day: data.day,
-    verdict: data.verdict,
-    stamp: data.stamp,
-  };
-  if (idx >= 0) saves[idx] = entry;
-  else saves.push(entry);
-  localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
-  localStorage.setItem(`fa-save-${slot}`, JSON.stringify(data));
+  try {
+    const saves = loadSaves();
+    const idx = saves.findIndex((s) => s.slot === slot);
+    const entry: SaveSlot = {
+      slot,
+      name: data.name,
+      day: data.day,
+      verdict: data.verdict,
+      stamp: data.stamp,
+    };
+    if (idx >= 0) saves[idx] = entry;
+    else saves.push(entry);
+    localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
+    localStorage.setItem(`fa-save-${slot}`, JSON.stringify(data));
+  } catch (e) {
+    console.error(`Failed to persist save ${slot}:`, e);
+    throw new Error('Save failed: unable to write to local storage');
+  }
 }
 
 export function loadSaveData(slot: number): SaveData | null {

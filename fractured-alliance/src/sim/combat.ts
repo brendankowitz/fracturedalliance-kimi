@@ -7,6 +7,9 @@ export interface CombatResult {
 }
 
 export function resolveCombat(attacker: Fleet, defender: Fleet): CombatResult {
+  if (attacker.ships.length === 0 || defender.ships.length === 0) {
+    return { attackerLosses: [], defenderLosses: [], log: ['Combat aborted: one side has no ships'] };
+  }
   const log: string[] = [];
   const attackerLosses: ShipInstance[] = [];
   const defenderLosses: ShipInstance[] = [];
@@ -49,6 +52,10 @@ export function resolveCombat(attacker: Fleet, defender: Fleet): CombatResult {
 
 function applyDamage(attacker: ShipInstance, target: ShipInstance, log: string[]) {
   let dmg = attacker.dmg;
+  if (!Number.isFinite(dmg) || dmg < 0) {
+    log.push(`Invalid damage from ${attacker.name}: ${dmg}`);
+    dmg = 0;
+  }
 
   if (target.shield > 0) {
     const shieldAbsorb = Math.min(target.shield, dmg);

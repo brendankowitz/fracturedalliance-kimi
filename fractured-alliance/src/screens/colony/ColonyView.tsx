@@ -24,6 +24,14 @@ export function ColonyView() {
   const buildQueue = asteroid?.buildQueue ?? [];
   const [hoverCell, setHoverCell] = useState<string | null>(null);
 
+  if (!asteroid) {
+    return (
+      <div className="screen screen-enter" style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <div className="t-eyebrow" style={{ color: 'var(--crit)' }}>SELECTED ASTEROID NOT FOUND</div>
+      </div>
+    );
+  }
+
   const sel = BUILDINGS.find((b) => b.id === selectedBuilding) ?? null;
 
   return (

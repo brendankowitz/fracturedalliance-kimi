@@ -302,7 +302,7 @@ function SectorInspector({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
           {(asteroid.deposits ?? []).map((d) => {
             const ore = ORES.find((o) => o.id === d);
-            const yieldVal = Math.round(Math.random() * 800 + 200); // mock
+            const yieldVal = 400; // deterministic mock
             return (
               <div key={d} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 12, height: 12, background: ore?.color }} />

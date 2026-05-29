@@ -62,27 +62,32 @@ export function tickAsteroid(state: AsteroidState, _tick: number): AsteroidState
       const increment = buildTimeTicks > 0 ? (100 / buildTimeTicks) : 100;
       active.pct = Math.min(100, active.pct + increment);
 
-      const cellKey = active.cell.replace('[', '').replace(']', '');
-      const building = next.placedBuildings[cellKey];
-      if (building) {
-        building.progress = active.pct / 100;
-        if (active.pct >= 100) {
-          building.constructing = false;
-          next.buildQueue.shift();
-          if (building.kind === 'shipyard') {
-            const scoutDef = SHIP_CLASSES.find((s) => s.id === 'scout');
-            if (scoutDef) {
-              const ship = createShip(scoutDef, next.ownerId ?? 'helion', next.id);
-              const fleet = createFleet(`fleet-${next.id}`, `${next.id} Defence`, next.ownerId ?? 'helion', [ship]);
-              next.fleets = [...next.fleets, fleet];
+      const cellKey = active.cell.replace(/[[\]]/g, '');
+      if (!/^\d+,\d+$/.test(cellKey)) {
+        // Invalid cell format — remove from queue or mark disabled
+        next.buildQueue.shift();
+      } else {
+        const building = next.placedBuildings[cellKey];
+        if (building) {
+          building.progress = active.pct / 100;
+          if (active.pct >= 100) {
+            building.constructing = false;
+            next.buildQueue.shift();
+            if (building.kind === 'shipyard') {
+              const scoutDef = SHIP_CLASSES.find((s) => s.id === 'scout');
+              if (scoutDef) {
+                const ship = createShip(scoutDef, next.ownerId ?? 'helion', next.id);
+                const fleet = createFleet(`fleet-${next.id}`, `${next.id} Defence`, next.ownerId ?? 'helion', [ship]);
+                next.fleets = [...next.fleets, fleet];
+              }
             }
-          }
-          if (building.kind === 'dock') {
-            const cruiserDef = SHIP_CLASSES.find((s) => s.id === 'cruiser');
-            if (cruiserDef) {
-              const ship = createShip(cruiserDef, next.ownerId ?? 'helion', next.id);
-              const fleet = createFleet(`fleet-${next.id}-cap`, `${next.id} Capital`, next.ownerId ?? 'helion', [ship]);
-              next.fleets = [...next.fleets, fleet];
+            if (building.kind === 'dock') {
+              const cruiserDef = SHIP_CLASSES.find((s) => s.id === 'cruiser');
+              if (cruiserDef) {
+                const ship = createShip(cruiserDef, next.ownerId ?? 'helion', next.id);
+                const fleet = createFleet(`fleet-${next.id}-cap`, `${next.id} Capital`, next.ownerId ?? 'helion', [ship]);
+                next.fleets = [...next.fleets, fleet];
+              }
             }
           }
         }
@@ -101,7 +106,7 @@ export function tickAsteroid(state: AsteroidState, _tick: number): AsteroidState
   }
 
   // Asteroid stability decay
-  const engineCount = Object.values(next.placedBuildings).filter(b => b.kind === 'engine').length;
+  const engineCount = Object.values(next.placedBuildings).filter(b => b.kind === 'engine' && !b.constructing).length;
   if (engineCount > 0) {
     next.resources.rad += engineCount * 0.5;
   }

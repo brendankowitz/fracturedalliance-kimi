@@ -26,7 +26,10 @@ export function serializeWorld(world: WorldState, name: string): string {
 export function deserializeWorld(json: string): { success: boolean; data?: SaveData; error?: string } {
   try {
     const parsed = JSON.parse(json);
-    if (!parsed.version || parsed.version > SCHEMA_VERSION) {
+    if (!parsed.world || !Array.isArray(parsed.world.asteroids) || typeof parsed.world.tick !== 'number') {
+      return { success: false, error: 'Save file missing required fields' };
+    }
+    if (!parsed.version || parsed.version > SCHEMA_VERSION || parsed.version < 1) {
       return { success: false, error: 'Unsupported save version' };
     }
     return { success: true, data: parsed };
