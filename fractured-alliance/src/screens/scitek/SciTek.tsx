@@ -220,46 +220,48 @@ function BlueprintDetail({ bp }: { bp: BlueprintDef | undefined }) {
             borderCollapse: 'collapse',
           }}
         >
-          {[
-            ['Discipline', bp.disc],
-            ['Tier', `T${bp.tier} of 4`],
-            ['Cost (one-off)', `${bp.cost.toLocaleString()} cr`],
-            ['Prerequisites', bp.tier > 1 ? `1 × ${bp.disc} T${bp.tier - 1}` : '—'],
-            [
-              'Federation impact',
-              bp.special
-                ? '−100 standing on activation'
-                : bp.disc === 'Offence' && bp.tier >= 3
-                ? 'Triggers alert'
-                : '—',
-            ],
-            [
-              'Build-time impact',
-              bp.disc === 'Logistics' ? 'Reduces construction time' : '—',
-            ],
-          ].map(([k, v]) => (
-            <tr key={k}>
-              <td
-                style={{
-                  padding: '6px 0',
-                  color: 'var(--fg-40)',
-                  borderBottom: '1px solid var(--line-soft)',
-                }}
-              >
-                {k}
-              </td>
-              <td
-                style={{
-                  padding: '6px 0',
-                  color: 'var(--fg-100)',
-                  textAlign: 'right',
-                  borderBottom: '1px solid var(--line-soft)',
-                }}
-              >
-                {v}
-              </td>
-            </tr>
-          ))}
+          <tbody>
+            {[
+              ['Discipline', bp.disc],
+              ['Tier', `T${bp.tier} of 4`],
+              ['Cost (one-off)', `${bp.cost.toLocaleString()} cr`],
+              ['Prerequisites', bp.tier > 1 ? `1 × ${bp.disc} T${bp.tier - 1}` : '—'],
+              [
+                'Federation impact',
+                bp.special
+                  ? '−100 standing on activation'
+                  : bp.disc === 'Offence' && bp.tier >= 3
+                  ? 'Triggers alert'
+                  : '—',
+              ],
+              [
+                'Build-time impact',
+                bp.disc === 'Logistics' ? 'Reduces construction time' : '—',
+              ],
+            ].map(([k, v]) => (
+              <tr key={k}>
+                <td
+                  style={{
+                    padding: '6px 0',
+                    color: 'var(--fg-40)',
+                    borderBottom: '1px solid var(--line-soft)',
+                  }}
+                >
+                  {k}
+                </td>
+                <td
+                  style={{
+                    padding: '6px 0',
+                    color: 'var(--fg-100)',
+                    textAlign: 'right',
+                    borderBottom: '1px solid var(--line-soft)',
+                  }}
+                >
+                  {v}
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
 

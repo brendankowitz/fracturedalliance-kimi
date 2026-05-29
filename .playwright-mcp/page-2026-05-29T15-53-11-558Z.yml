@@ -1,0 +1,156 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e115]:
+      - generic [ref=e118] [cursor=pointer]:
+        - generic [ref=e119]: FRACTURED // ALLIANCE
+        - generic [ref=e120]: HELION CORP · OPS CONSOLE v2.4.1
+      - navigation [ref=e121]:
+        - button "Sector F2" [ref=e122] [cursor=pointer]:
+          - generic [ref=e123]: Sector
+          - generic [ref=e124]: F2
+        - button "Colony F3" [ref=e125] [cursor=pointer]:
+          - generic [ref=e126]: Colony
+          - generic [ref=e127]: F3
+        - button "Sci-Tek F4" [ref=e128] [cursor=pointer]:
+          - generic [ref=e129]: Sci-Tek
+          - generic [ref=e130]: F4
+        - button "Commerce F5" [ref=e131] [cursor=pointer]:
+          - generic [ref=e132]: Commerce
+          - generic [ref=e133]: F5
+        - button "Diplomacy F6" [ref=e134] [cursor=pointer]:
+          - generic [ref=e135]: Diplomacy
+          - generic [ref=e136]: F6
+        - button "Tactical F7" [ref=e137] [cursor=pointer]:
+          - generic [ref=e138]: Tactical
+          - generic [ref=e139]: F7
+        - button "Black Cell F8" [ref=e140] [cursor=pointer]:
+          - generic [ref=e141]: Black Cell
+          - generic [ref=e142]: F8
+      - generic [ref=e143]:
+        - generic [ref=e146]: FED-STAND +62
+        - generic [ref=e149]: CR 142,840
+        - generic [ref=e152]: ALERTS 3
+        - generic [ref=e153]: SIM/11.15 T+0345
+    - generic [ref=e155]:
+      - generic [ref=e156]:
+        - generic [ref=e157]:
+          - generic [ref=e158]:
+            - generic [ref=e159]: "[ SECTOR 7-DELTA / FRAGMENTED SECTORS ]"
+            - generic [ref=e160]: Belt Overview
+            - generic [ref=e161]: 15 charted bodies
+          - generic [ref=e162]:
+            - button "FILTER" [ref=e163] [cursor=pointer]
+            - button "PROBE" [ref=e164] [cursor=pointer]
+            - button "LAUNCH SCOUT" [ref=e165] [cursor=pointer]
+        - img [ref=e166]:
+          - generic [ref=e169]: α
+          - generic [ref=e170]: β
+          - generic [ref=e171]: γ
+          - generic [ref=e177]: "⚠ TRAJ: GALLOW → FORGE-3 · ETA 42d"
+        - generic [ref=e178]:
+          - button "ARCH-IL" [ref=e179] [cursor=pointer]:
+            - generic [ref=e182]: ARCH-IL
+          - button "ARCH-IIM" [ref=e183] [cursor=pointer]:
+            - generic [ref=e185]: ARCH-IIM
+          - button "FORGE-3L" [ref=e186] [cursor=pointer]:
+            - generic [ref=e189]: FORGE-3L
+          - button "KEPLER-7S" [ref=e190] [cursor=pointer]:
+            - generic [ref=e192]: KEPLER-7S
+          - button "LONG SHOTM" [ref=e193] [cursor=pointer]:
+            - generic [ref=e195]: LONG SHOTM
+          - button "LATTICEM" [ref=e196] [cursor=pointer]:
+            - generic [ref=e198]: LATTICEM
+          - button "SALTS" [ref=e199] [cursor=pointer]:
+            - generic [ref=e201]: SALTS
+          - button "THRESHL" [ref=e202] [cursor=pointer]:
+            - generic [ref=e204]: THRESHL
+          - button "PYREL" [ref=e205] [cursor=pointer]:
+            - generic [ref=e208]: PYREL
+          - button "GALLOWM" [ref=e209] [cursor=pointer]:
+            - generic [ref=e212]: GALLOWM
+          - button "MOLM" [ref=e213] [cursor=pointer]:
+            - generic [ref=e216]: MOLM
+          - button "TAPROOTL" [ref=e217] [cursor=pointer]:
+            - generic [ref=e219]: TAPROOTL
+          - button "ASPENM" [ref=e220] [cursor=pointer]:
+            - generic [ref=e222]: ASPENM
+          - button "NYXL" [ref=e223] [cursor=pointer]:
+            - generic [ref=e226]: NYXL
+          - button "BROKENXL" [ref=e227] [cursor=pointer]:
+            - generic [ref=e229]: BROKENXL
+        - generic [ref=e230]:
+          - generic [ref=e231]: LEGEND
+          - generic [ref=e232]: HELION
+          - generic [ref=e234]: ALLY
+          - generic [ref=e236]: HOSTILE
+          - generic [ref=e238]: OUTLAW
+          - generic [ref=e240]: UNCLAIMED
+          - generic [ref=e242]:
+            - generic [ref=e243]: ZOOM 1.4×
+            - generic [ref=e244]: WASD pan · scroll zoom · click select
+      - complementary [ref=e245]:
+        - generic [ref=e246]:
+          - generic [ref=e247]: SECTOR DOSSIER
+          - generic [ref=e248]:
+            - generic [ref=e249]: Arch-I
+            - generic [ref=e250]: L-class
+          - generic [ref=e251]: coord (26.38) · grid 9×9
+        - generic [ref=e252]:
+          - generic [ref=e253]: OWNERSHIP
+          - generic [ref=e254]:
+            - generic [ref=e255]: HEL
+            - generic [ref=e256]:
+              - generic [ref=e257]: Helion Corp
+              - generic [ref=e258]: TetraCorp Successor — Player Faction
+        - generic [ref=e259]:
+          - generic [ref=e260]: VITALS
+          - generic [ref=e261]:
+            - generic [ref=e262]:
+              - generic [ref=e263]: "250"
+              - generic [ref=e264]: Population
+            - generic [ref=e265]:
+              - generic [ref=e266]: "100"
+              - generic [ref=e267]: Happiness
+            - generic [ref=e268]:
+              - generic [ref=e269]: "8"
+              - generic [ref=e270]: Radiation
+            - generic [ref=e271]:
+              - generic [ref=e272]: ████
+              - generic [ref=e273]: Stability
+        - generic [ref=e274]:
+          - generic [ref=e275]: DEPOSITS · GEO SURVEY
+          - generic [ref=e276]:
+            - generic [ref=e277]:
+              - generic [ref=e279]: Crystalite
+              - generic [ref=e280]: T2
+              - generic [ref=e281]: 400t
+            - generic [ref=e282]:
+              - generic [ref=e284]: Barium
+              - generic [ref=e285]: T2
+              - generic [ref=e286]: 400t
+            - generic [ref=e287]:
+              - generic [ref=e289]: Quazinc
+              - generic [ref=e290]: T2
+              - generic [ref=e291]: 400t
+        - generic [ref=e292]:
+          - generic [ref=e293]: ACTIONS
+          - button "◴ MANAGE COLONY ▸" [ref=e294] [cursor=pointer]
+          - button "LAUNCH FLEET" [ref=e295] [cursor=pointer]
+          - button "REASSIGN SUPERVISOR" [ref=e296] [cursor=pointer]
+    - contentinfo [ref=e297]:
+      - generic [ref=e298]:
+        - generic [ref=e299]: ● READY
+        - generic [ref=e300]: Viewing SECTOR · select an asteroid to inspect
+      - generic [ref=e301]:
+        - button "❚❚ PAUSE" [ref=e302] [cursor=pointer]
+        - button "0.5×" [ref=e303] [cursor=pointer]
+        - button "1×" [ref=e304] [cursor=pointer]
+        - button "2×" [ref=e305] [cursor=pointer]
+        - button "4×" [ref=e306] [cursor=pointer]
+        - button "8×" [ref=e307] [cursor=pointer]
+      - generic [ref=e308]:
+        - generic [ref=e309]: SEED 0x8FA12C
+        - generic [ref=e310]: MATCH 03:42:18
+        - generic [ref=e311]: SAVE — AUTO
+        - generic [ref=e312]: ● SYNCED
+  - button "⚙ TWEAKS" [ref=e114] [cursor=pointer]

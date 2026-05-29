@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { BUILDINGS, EVENT_FEED, ASTEROIDS } from '../../data/gameData';
 import { BuildingGlyph } from '../../assets/BuildingGlyph';
@@ -19,7 +19,12 @@ const CATS = [
 export function ColonyView() {
   const selectedBuilding = useGameStore((s) => s.selectedBuilding);
   const setSelectedBuilding = useGameStore((s) => s.setSelectedBuilding);
-  const asteroid = useGameStore((s) => s.asteroids.find(a => a.id === s.selectedAsteroid));
+  const asteroids = useGameStore((s) => s.asteroids);
+  const selectedAsteroidId = useGameStore((s) => s.selectedAsteroid);
+  const asteroid = useMemo(
+    () => asteroids.find((a) => a.id === selectedAsteroidId),
+    [asteroids, selectedAsteroidId]
+  );
   const placed = asteroid?.placedBuildings ?? {};
   const buildQueue = asteroid?.buildQueue ?? [];
   const [hoverCell, setHoverCell] = useState<string | null>(null);

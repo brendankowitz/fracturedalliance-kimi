@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ORES, BLACK_MARKET } from '../../data/gameData';
 import type { OreDef, BlackMarketItem } from '../../types';
@@ -10,7 +10,12 @@ export function Trade() {
   const [channel, setChannel] = useState<'federal' | 'merchant' | 'black'>('federal');
 
   const market = useGameStore((s) => s.market);
-  const asteroid = useGameStore((s) => s.asteroids.find((a) => a.id === s.selectedAsteroid));
+  const asteroids = useGameStore((s) => s.asteroids);
+  const selectedAsteroidId = useGameStore((s) => s.selectedAsteroid);
+  const asteroid = useMemo(
+    () => asteroids.find((a) => a.id === selectedAsteroidId),
+    [asteroids, selectedAsteroidId]
+  );
   const treasury = useGameStore((s) => s.treasury);
   const buyOre = useGameStore((s) => s.buyOre);
   const sellOre = useGameStore((s) => s.sellOre);

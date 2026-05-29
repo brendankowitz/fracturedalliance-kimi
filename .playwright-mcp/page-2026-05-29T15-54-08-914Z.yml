@@ -1,0 +1,368 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e115]:
+      - generic [ref=e118] [cursor=pointer]:
+        - generic [ref=e119]: FRACTURED // ALLIANCE
+        - generic [ref=e120]: HELION CORP · OPS CONSOLE v2.4.1
+      - navigation [ref=e121]:
+        - button "Sector F2" [ref=e122] [cursor=pointer]:
+          - generic [ref=e123]: Sector
+          - generic [ref=e124]: F2
+        - button "Colony F3" [ref=e125] [cursor=pointer]:
+          - generic [ref=e126]: Colony
+          - generic [ref=e127]: F3
+        - button "Sci-Tek F4" [ref=e128] [cursor=pointer]:
+          - generic [ref=e129]: Sci-Tek
+          - generic [ref=e130]: F4
+        - button "Commerce F5" [ref=e131] [cursor=pointer]:
+          - generic [ref=e132]: Commerce
+          - generic [ref=e133]: F5
+        - button "Diplomacy F6" [ref=e134] [cursor=pointer]:
+          - generic [ref=e135]: Diplomacy
+          - generic [ref=e136]: F6
+        - button "Tactical F7" [ref=e137] [cursor=pointer]:
+          - generic [ref=e138]: Tactical
+          - generic [ref=e139]: F7
+        - button "Black Cell F8" [ref=e140] [cursor=pointer]:
+          - generic [ref=e141]: Black Cell
+          - generic [ref=e142]: F8
+      - generic [ref=e143]:
+        - generic [ref=e146]: FED-STAND +62
+        - generic [ref=e149]: CR 142,840
+        - generic [ref=e152]: ALERTS 3
+        - generic [ref=e153]: SIM/11.25 T+0355
+    - generic [ref=e1172]:
+      - generic [ref=e1173]:
+        - generic [ref=e1174]:
+          - generic [ref=e1175]:
+            - generic [ref=e1176]: COMMERCE & LOGISTICS
+            - generic [ref=e1177]: Ore Markets
+          - generic [ref=e1178]:
+            - generic [ref=e1179]: treasury
+            - generic [ref=e1180]: 142,840 cr
+            - generic [ref=e1181]: ▲ LIVE
+        - generic [ref=e1182]:
+          - button "FEDERAL ORE TRANSPORTER 0.7× / safe" [ref=e1183] [cursor=pointer]:
+            - generic [ref=e1184]: FEDERAL ORE TRANSPORTER
+            - generic [ref=e1185]: 0.7× / safe
+          - button "INDEPENDENT MERCHANTS 1.0× / docked" [ref=e1186] [cursor=pointer]:
+            - generic [ref=e1187]: INDEPENDENT MERCHANTS
+            - generic [ref=e1188]: 1.0× / docked
+          - button "BLACK MARKET 1.6× / risk 35%" [ref=e1189] [cursor=pointer]:
+            - generic [ref=e1190]: BLACK MARKET
+            - generic [ref=e1191]: 1.6× / risk 35%
+        - generic [ref=e1193]:
+          - generic [ref=e1194]:
+            - generic [ref=e1195]:
+              - generic [ref=e1196]:
+                - generic [ref=e1197]: NEXT TRANSPORTER
+                - generic [ref=e1198]: monthly
+              - generic [ref=e1199]:
+                - generic [ref=e1200]:
+                  - generic [ref=e1201]: 14 days
+                  - generic [ref=e1202]: until docking · ARCH-I bay
+                - generic [ref=e1203]:
+                  - generic [ref=e1204]:
+                    - text: capacity
+                    - generic [ref=e1205]: 2,400 t
+                  - generic [ref=e1206]:
+                    - text: pre-booked
+                    - generic [ref=e1207]: 1,180 t
+                  - generic [ref=e1208]:
+                    - text: your queue
+                    - generic [ref=e1209]: 640 t
+            - generic [ref=e1210]:
+              - generic [ref=e1211]:
+                - generic [ref=e1212]: PRICE FORECAST · 30d
+                - generic [ref=e1213]: universe avg
+              - generic [ref=e1214]:
+                - img [ref=e1215]
+                - generic [ref=e1230]: Crystalite rising · Dragonium peaking · Korellium soft
+          - generic [ref=e1231]:
+            - generic [ref=e1232]:
+              - generic [ref=e1233]: ORE LEDGER
+              - generic [ref=e1234]: priced at Federal 0.7× · per tonne
+            - table [ref=e1235]:
+              - rowgroup [ref=e1236]:
+                - row "ORE TIER STOCKPILE FED PRICE 30D VALUE BUY SELL" [ref=e1237]:
+                  - columnheader "ORE" [ref=e1238]
+                  - columnheader "TIER" [ref=e1239]
+                  - columnheader "STOCKPILE" [ref=e1240]
+                  - columnheader "FED PRICE" [ref=e1241]
+                  - columnheader "30D" [ref=e1242]
+                  - columnheader "VALUE" [ref=e1243]
+                  - columnheader "BUY" [ref=e1244]
+                  - columnheader "SELL" [ref=e1245]
+              - rowgroup [ref=e1246]:
+                - row "Selenium T1 0 t 8 cr — 0 BUY 1 BUY 10 SELL 1 SELL 10" [ref=e1247]:
+                  - cell "Selenium" [ref=e1248]:
+                    - generic [ref=e1251]: Selenium
+                  - cell "T1" [ref=e1252]
+                  - cell "0 t" [ref=e1253]
+                  - cell "8 cr" [ref=e1254]
+                  - cell "—" [ref=e1255]
+                  - cell "0" [ref=e1256]
+                  - cell "BUY 1 BUY 10" [ref=e1257]:
+                    - generic [ref=e1258]:
+                      - button "BUY 1" [ref=e1259] [cursor=pointer]
+                      - button "BUY 10" [ref=e1260] [cursor=pointer]
+                  - cell "SELL 1 SELL 10" [ref=e1261]:
+                    - generic [ref=e1262]:
+                      - button "SELL 1" [disabled] [ref=e1263]
+                      - button "SELL 10" [disabled] [ref=e1264]
+                - row "Asteros T1 0 t 13 cr — 0 BUY 1 BUY 10 SELL 1 SELL 10" [ref=e1265]:
+                  - cell "Asteros" [ref=e1266]:
+                    - generic [ref=e1269]: Asteros
+                  - cell "T1" [ref=e1270]
+                  - cell "0 t" [ref=e1271]
+                  - cell "13 cr" [ref=e1272]
+                  - cell "—" [ref=e1273]
+                  - cell "0" [ref=e1274]
+                  - cell "BUY 1 BUY 10" [ref=e1275]:
+                    - generic [ref=e1276]:
+                      - button "BUY 1" [ref=e1277] [cursor=pointer]
+                      - button "BUY 10" [ref=e1278] [cursor=pointer]
+                  - cell "SELL 1 SELL 10" [ref=e1279]:
+                    - generic [ref=e1280]:
+                      - button "SELL 1" [disabled] [ref=e1281]
+                      - button "SELL 10" [disabled] [ref=e1282]
+                - row "Barium T2 0 t 17 cr — 0 BUY 1 BUY 10 SELL 1 SELL 10" [ref=e1283]:
+                  - cell "Barium" [ref=e1284]:
+                    - generic [ref=e1287]: Barium
+                  - cell "T2" [ref=e1288]
+                  - cell "0 t" [ref=e1289]
+                  - cell "17 cr" [ref=e1290]
+                  - cell "—" [ref=e1291]
+                  - cell "0" [ref=e1292]
+                  - cell "BUY 1 BUY 10" [ref=e1293]:
+                    - generic [ref=e1294]:
+                      - button "BUY 1" [ref=e1295] [cursor=pointer]
+                      - button "BUY 10" [ref=e1296] [cursor=pointer]
+                  - cell "SELL 1 SELL 10" [ref=e1297]:
+                    - generic [ref=e1298]:
+                      - button "SELL 1" [disabled] [ref=e1299]
+                      - button "SELL 10" [disabled] [ref=e1300]
+                - row "Crystalite T2 0 t 27 cr — 0 BUY 1 BUY 10 SELL 1 SELL 10" [ref=e1301]:
+                  - cell "Crystalite" [ref=e1302]:
+                    - generic [ref=e1305]: Crystalite
+                  - cell "T2" [ref=e1306]
+                  - cell "0 t" [ref=e1307]
+                  - cell "27 cr" [ref=e1308]
+                  - cell "—" [ref=e1309]
+                  - cell "0" [ref=e1310]
+                  - cell "BUY 1 BUY 10" [ref=e1311]:
+                    - generic [ref=e1312]:
+                      - button "BUY 1" [ref=e1313] [cursor=pointer]
+                      - button "BUY 10" [ref=e1314] [cursor=pointer]
+                  - cell "SELL 1 SELL 10" [ref=e1315]:
+                    - generic [ref=e1316]:
+                      - button "SELL 1" [disabled] [ref=e1317]
+                      - button "SELL 10" [disabled] [ref=e1318]
+                - row "Quazinc T2 0 t 36 cr — 0 BUY 1 BUY 10 SELL 1 SELL 10" [ref=e1319]:
+                  - cell "Quazinc" [ref=e1320]:
+                    - generic [ref=e1323]: Quazinc
+                  - cell "T2" [ref=e1324]
+                  - cell "0 t" [ref=e1325]
+                  - cell "36 cr" [ref=e1326]
+                  - cell "—" [ref=e1327]
+                  - cell "0" [ref=e1328]
+                  - cell "BUY 1 BUY 10" [ref=e1329]:
+                    - generic [ref=e1330]:
+                      - button "BUY 1" [ref=e1331] [cursor=pointer]
+                      - button "BUY 10" [ref=e1332] [cursor=pointer]
+                  - cell "SELL 1 SELL 10" [ref=e1333]:
+                    - generic [ref=e1334]:
+                      - button "SELL 1" [disabled] [ref=e1335]
+                      - button "SELL 10" [disabled] [ref=e1336]
+                - row "Bytanium T3 0 t 61 cr — 0 BUY 1 BUY 10 SELL 1 SELL 10" [ref=e1337]:
+                  - cell "Bytanium" [ref=e1338]:
+                    - generic [ref=e1341]: Bytanium
+                  - cell "T3" [ref=e1342]
+                  - cell "0 t" [ref=e1343]
+                  - cell "61 cr" [ref=e1344]
+                  - cell "—" [ref=e1345]
+                  - cell "0" [ref=e1346]
+                  - cell "BUY 1 BUY 10" [ref=e1347]:
+                    - generic [ref=e1348]:
+                      - button "BUY 1" [ref=e1349] [cursor=pointer]
+                      - button "BUY 10" [ref=e1350] [cursor=pointer]
+                  - cell "SELL 1 SELL 10" [ref=e1351]:
+                    - generic [ref=e1352]:
+                      - button "SELL 1" [disabled] [ref=e1353]
+                      - button "SELL 10" [disabled] [ref=e1354]
+                - row "Korellium T3 0 t 97 cr — 0 BUY 1 BUY 10 SELL 1 SELL 10" [ref=e1355]:
+                  - cell "Korellium" [ref=e1356]:
+                    - generic [ref=e1359]: Korellium
+                  - cell "T3" [ref=e1360]
+                  - cell "0 t" [ref=e1361]
+                  - cell "97 cr" [ref=e1362]
+                  - cell "—" [ref=e1363]
+                  - cell "0" [ref=e1364]
+                  - cell "BUY 1 BUY 10" [ref=e1365]:
+                    - generic [ref=e1366]:
+                      - button "BUY 1" [ref=e1367] [cursor=pointer]
+                      - button "BUY 10" [ref=e1368] [cursor=pointer]
+                  - cell "SELL 1 SELL 10" [ref=e1369]:
+                    - generic [ref=e1370]:
+                      - button "SELL 1" [disabled] [ref=e1371]
+                      - button "SELL 10" [disabled] [ref=e1372]
+                - row "Dragonium T3 0 t 167 cr — 0 BUY 1 BUY 10 SELL 1 SELL 10" [ref=e1373]:
+                  - cell "Dragonium" [ref=e1374]:
+                    - generic [ref=e1377]: Dragonium
+                  - cell "T3" [ref=e1378]
+                  - cell "0 t" [ref=e1379]
+                  - cell "167 cr" [ref=e1380]
+                  - cell "—" [ref=e1381]
+                  - cell "0" [ref=e1382]
+                  - cell "BUY 1 BUY 10" [ref=e1383]:
+                    - generic [ref=e1384]:
+                      - button "BUY 1" [ref=e1385] [cursor=pointer]
+                      - button "BUY 10" [ref=e1386] [cursor=pointer]
+                  - cell "SELL 1 SELL 10" [ref=e1387]:
+                    - generic [ref=e1388]:
+                      - button "SELL 1" [disabled] [ref=e1389]
+                      - button "SELL 10" [disabled] [ref=e1390]
+                - row "Traxium T4 0 t 357 cr — 0 BUY 1 BUY 10 SELL 1 SELL 10" [ref=e1391]:
+                  - cell "Traxium" [ref=e1392]:
+                    - generic [ref=e1395]: Traxium
+                  - cell "T4" [ref=e1396]
+                  - cell "0 t" [ref=e1397]
+                  - cell "357 cr" [ref=e1398]
+                  - cell "—" [ref=e1399]
+                  - cell "0" [ref=e1400]
+                  - cell "BUY 1 BUY 10" [ref=e1401]:
+                    - generic [ref=e1402]:
+                      - button "BUY 1" [ref=e1403] [cursor=pointer]
+                      - button "BUY 10" [ref=e1404] [cursor=pointer]
+                  - cell "SELL 1 SELL 10" [ref=e1405]:
+                    - generic [ref=e1406]:
+                      - button "SELL 1" [disabled] [ref=e1407]
+                      - button "SELL 10" [disabled] [ref=e1408]
+                - row "Nexos T4 0 t 675 cr — 0 BUY 1 BUY 10 SELL 1 SELL 10" [ref=e1409]:
+                  - cell "Nexos" [ref=e1410]:
+                    - generic [ref=e1413]: Nexos
+                  - cell "T4" [ref=e1414]
+                  - cell "0 t" [ref=e1415]
+                  - cell "675 cr" [ref=e1416]
+                  - cell "—" [ref=e1417]
+                  - cell "0" [ref=e1418]
+                  - cell "BUY 1 BUY 10" [ref=e1419]:
+                    - generic [ref=e1420]:
+                      - button "BUY 1" [ref=e1421] [cursor=pointer]
+                      - button "BUY 10" [ref=e1422] [cursor=pointer]
+                  - cell "SELL 1 SELL 10" [ref=e1423]:
+                    - generic [ref=e1424]:
+                      - button "SELL 1" [disabled] [ref=e1425]
+                      - button "SELL 10" [disabled] [ref=e1426]
+      - complementary [ref=e1427]:
+        - generic [ref=e1428]:
+          - generic [ref=e1429]: STOCKPILE · ALL ASTEROIDS
+          - generic [ref=e1430]:
+            - generic [ref=e1432]:
+              - generic [ref=e1435]: Selenium
+              - generic [ref=e1436]:
+                - text: "0"
+                - generic [ref=e1437]: /1000t
+                - generic [ref=e1438]: "@ 12 cr"
+            - generic [ref=e1441]:
+              - generic [ref=e1444]: Asteros
+              - generic [ref=e1445]:
+                - text: "0"
+                - generic [ref=e1446]: /1000t
+                - generic [ref=e1447]: "@ 18 cr"
+            - generic [ref=e1450]:
+              - generic [ref=e1453]: Barium
+              - generic [ref=e1454]:
+                - text: "0"
+                - generic [ref=e1455]: /1000t
+                - generic [ref=e1456]: "@ 24 cr"
+            - generic [ref=e1459]:
+              - generic [ref=e1462]: Crystalite
+              - generic [ref=e1463]:
+                - text: "0"
+                - generic [ref=e1464]: /1000t
+                - generic [ref=e1465]: "@ 39 cr"
+            - generic [ref=e1468]:
+              - generic [ref=e1471]: Quazinc
+              - generic [ref=e1472]:
+                - text: "0"
+                - generic [ref=e1473]: /1000t
+                - generic [ref=e1474]: "@ 52 cr"
+            - generic [ref=e1477]:
+              - generic [ref=e1480]: Bytanium
+              - generic [ref=e1481]:
+                - text: "0"
+                - generic [ref=e1482]: /1000t
+                - generic [ref=e1483]: "@ 87 cr"
+            - generic [ref=e1486]:
+              - generic [ref=e1489]: Korellium
+              - generic [ref=e1490]:
+                - text: "0"
+                - generic [ref=e1491]: /1000t
+                - generic [ref=e1492]: "@ 139 cr"
+        - generic [ref=e1494]:
+          - generic [ref=e1495]: MARKET TICK
+          - generic [ref=e1496]:
+            - generic [ref=e1497]:
+              - generic [ref=e1498]: crystalite
+              - generic [ref=e1499]: 39 cr
+              - generic [ref=e1500]: —
+            - generic [ref=e1501]:
+              - generic [ref=e1502]: dragonium
+              - generic [ref=e1503]: 238 cr
+              - generic [ref=e1504]: —
+            - generic [ref=e1505]:
+              - generic [ref=e1506]: korellium
+              - generic [ref=e1507]: 139 cr
+              - generic [ref=e1508]: —
+            - generic [ref=e1509]:
+              - generic [ref=e1510]: barium
+              - generic [ref=e1511]: 24 cr
+              - generic [ref=e1512]: —
+    - contentinfo [ref=e297]:
+      - generic [ref=e298]:
+        - generic [ref=e299]: ● READY
+        - generic [ref=e300]: Viewing TRADE · select an asteroid to inspect
+      - generic [ref=e301]:
+        - button "❚❚ PAUSE" [ref=e302] [cursor=pointer]
+        - button "0.5×" [ref=e303] [cursor=pointer]
+        - button "1×" [ref=e304] [cursor=pointer]
+        - button "2×" [ref=e305] [cursor=pointer]
+        - button "4×" [ref=e306] [cursor=pointer]
+        - button "8×" [ref=e307] [cursor=pointer]
+      - generic [ref=e308]:
+        - generic [ref=e309]: SEED 0x8FA12C
+        - generic [ref=e310]: MATCH 03:42:18
+        - generic [ref=e311]: SAVE — AUTO
+        - generic [ref=e312]: ● SYNCED
+  - generic [ref=e113]:
+    - button "✕ CLOSE" [ref=e332] [cursor=pointer]
+    - generic [ref=e333]:
+      - generic [ref=e334]: THEME
+      - generic [ref=e335]:
+        - button "warn" [ref=e336] [cursor=pointer]
+        - button "cyan" [ref=e337] [cursor=pointer]
+        - button "crimson" [ref=e338] [cursor=pointer]
+        - button "verdant" [ref=e339] [cursor=pointer]
+      - generic [ref=e340]: LAYOUT
+      - generic [ref=e341]:
+        - button "compact" [ref=e342] [cursor=pointer]
+        - button "regular" [ref=e343] [cursor=pointer]
+        - button "spacious" [ref=e344] [cursor=pointer]
+      - generic [ref=e345]: EFFECTS
+      - generic [ref=e346] [cursor=pointer]:
+        - checkbox "Scanlines" [ref=e347]
+        - text: Scanlines
+      - generic [ref=e348] [cursor=pointer]:
+        - checkbox "Vignette" [ref=e349]
+        - text: Vignette
+      - generic [ref=e350]: JUMP TO
+      - generic [ref=e351]:
+        - button "Main menu" [ref=e352] [cursor=pointer]
+        - button "Sector" [ref=e353] [cursor=pointer]
+        - button "Colony" [ref=e354] [cursor=pointer]
+        - button "Sci-Tek" [ref=e355] [cursor=pointer]
+        - button "Diplomacy" [ref=e356] [cursor=pointer]
+        - button "Commerce" [active] [ref=e357] [cursor=pointer]
+        - button "Tactical" [ref=e358] [cursor=pointer]
+        - button "Black Cell" [ref=e359] [cursor=pointer]

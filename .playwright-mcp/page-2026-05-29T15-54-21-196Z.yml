@@ -1,0 +1,382 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e115]:
+      - generic [ref=e118] [cursor=pointer]:
+        - generic [ref=e119]: FRACTURED // ALLIANCE
+        - generic [ref=e120]: HELION CORP · OPS CONSOLE v2.4.1
+      - navigation [ref=e121]:
+        - button "Sector F2" [ref=e122] [cursor=pointer]:
+          - generic [ref=e123]: Sector
+          - generic [ref=e124]: F2
+        - button "Colony F3" [ref=e125] [cursor=pointer]:
+          - generic [ref=e126]: Colony
+          - generic [ref=e127]: F3
+        - button "Sci-Tek F4" [ref=e128] [cursor=pointer]:
+          - generic [ref=e129]: Sci-Tek
+          - generic [ref=e130]: F4
+        - button "Commerce F5" [ref=e131] [cursor=pointer]:
+          - generic [ref=e132]: Commerce
+          - generic [ref=e133]: F5
+        - button "Diplomacy F6" [ref=e134] [cursor=pointer]:
+          - generic [ref=e135]: Diplomacy
+          - generic [ref=e136]: F6
+        - button "Tactical F7" [ref=e137] [cursor=pointer]:
+          - generic [ref=e138]: Tactical
+          - generic [ref=e139]: F7
+        - button "Black Cell F8" [ref=e140] [cursor=pointer]:
+          - generic [ref=e141]: Black Cell
+          - generic [ref=e142]: F8
+      - generic [ref=e143]:
+        - generic [ref=e146]: FED-STAND +62
+        - generic [ref=e149]: CR 142,840
+        - generic [ref=e152]: ALERTS 3
+        - generic [ref=e153]: SIM/11.27 T+0357
+    - generic [ref=e1514]:
+      - complementary [ref=e1515]:
+        - generic [ref=e1516]:
+          - generic [ref=e1517]: DIPLOMATIC AFFAIRS
+          - generic [ref=e1518]: Federation Council
+          - generic [ref=e1519]: 6 charted races · 5 Federation · 1 outlaw
+        - generic [ref=e1520]:
+          - generic [ref=e1521]: RACES
+          - button "KRY Kryll Collective Principled-Aggressive — no treaties — 0 neutral" [ref=e1522] [cursor=pointer]:
+            - generic [ref=e1523]: KRY
+            - generic [ref=e1524]:
+              - generic [ref=e1525]: Kryll Collective
+              - generic [ref=e1526]: Principled-Aggressive
+              - generic [ref=e1528]: — no treaties —
+            - generic [ref=e1529]:
+              - generic [ref=e1530]: "0"
+              - generic [ref=e1531]: neutral
+          - button "MOT Motkaj Clans Opportunist-Aggressive — no treaties — 0 neutral" [ref=e1532] [cursor=pointer]:
+            - generic [ref=e1533]: MOT
+            - generic [ref=e1534]:
+              - generic [ref=e1535]: Motkaj Clans
+              - generic [ref=e1536]: Opportunist-Aggressive
+              - generic [ref=e1538]: — no treaties —
+            - generic [ref=e1539]:
+              - generic [ref=e1540]: "0"
+              - generic [ref=e1541]: neutral
+          - button "ACH Achar Gatherings Peaceful-Trader — no treaties — 0 neutral" [ref=e1542] [cursor=pointer]:
+            - generic [ref=e1543]: ACH
+            - generic [ref=e1544]:
+              - generic [ref=e1545]: Achar Gatherings
+              - generic [ref=e1546]: Peaceful-Trader
+              - generic [ref=e1548]: — no treaties —
+            - generic [ref=e1549]:
+              - generic [ref=e1550]: "0"
+              - generic [ref=e1551]: neutral
+          - button "BRK Brakkat Dominion Neutral-Reactive — no treaties — 0 neutral" [ref=e1552] [cursor=pointer]:
+            - generic [ref=e1553]: BRK
+            - generic [ref=e1554]:
+              - generic [ref=e1555]: Brakkat Dominion
+              - generic [ref=e1556]: Neutral-Reactive
+              - generic [ref=e1558]: — no treaties —
+            - generic [ref=e1559]:
+              - generic [ref=e1560]: "0"
+              - generic [ref=e1561]: neutral
+          - button "RIG Rigal Conclave Peaceful-Scientist — no treaties — 0 neutral" [ref=e1562] [cursor=pointer]:
+            - generic [ref=e1563]: RIG
+            - generic [ref=e1564]:
+              - generic [ref=e1565]: Rigal Conclave
+              - generic [ref=e1566]: Peaceful-Scientist
+              - generic [ref=e1568]: — no treaties —
+            - generic [ref=e1569]:
+              - generic [ref=e1570]: "0"
+              - generic [ref=e1571]: neutral
+          - button "MAU Mauna Hostile-Outlaw — no treaties — 0 neutral" [ref=e1572] [cursor=pointer]:
+            - generic [ref=e1573]: MAU
+            - generic [ref=e1574]:
+              - generic [ref=e1575]: Mauna
+              - generic [ref=e1576]: Hostile-Outlaw
+              - generic [ref=e1578]: — no treaties —
+            - generic [ref=e1579]:
+              - generic [ref=e1580]: "0"
+              - generic [ref=e1581]: neutral
+        - generic [ref=e1582]:
+          - generic [ref=e1583]: YOUR STANDING
+          - generic [ref=e1584]:
+            - generic [ref=e1585]:
+              - generic [ref=e1586]: Corporate Federation
+              - generic [ref=e1587]: "+62"
+            - generic [ref=e1590]:
+              - text: +62 / +100 · Holding for 28 days. Corporate victory in
+              - generic [ref=e1591]: 32 days
+              - text: if held.
+      - generic [ref=e1592]:
+        - generic [ref=e1593]:
+          - generic [ref=e1594]: "[ AMBASSADORIAL CHANNEL ]"
+          - generic [ref=e1595]:
+            - generic [ref=e1596]: Kryll Collective
+            - generic [ref=e1597]: ·
+            - generic [ref=e1598]: Principled-Aggressive
+          - generic [ref=e1599]:
+            - generic [ref=e1600]:
+              - generic [ref=e1601]: ambassador
+              - generic [ref=e1602]: Voskres-9
+            - generic [ref=e1603]:
+              - generic [ref=e1604]: disposition
+              - generic [ref=e1605]: AGGRESSIVE
+            - generic [ref=e1606]:
+              - generic [ref=e1607]: standing
+              - generic [ref=e1608]: NEUTRAL
+        - generic [ref=e1610]:
+          - generic [ref=e1611]:
+            - generic [ref=e1612]: VIDEO LINK
+            - generic [ref=e1613]:
+              - generic [ref=e1616]:
+                - generic [ref=e1617]: KRY
+                - generic [ref=e1618]: "[ AMBASSADOR PORTRAIT ]"
+                - generic [ref=e1619]: placeholder · video link
+              - generic [ref=e1622]: ● REC
+              - generic [ref=e1623]: CH.KRY
+              - generic [ref=e1624]:
+                - generic [ref=e1625]: Voskres-9
+                - generic [ref=e1626]: 00:01:47
+            - generic [ref=e1627]:
+              - button "OPEN CHANNEL" [ref=e1628] [cursor=pointer]
+              - button "MUTE" [ref=e1629] [cursor=pointer]
+            - generic [ref=e1630]: Moral-grandstanding ideologues. They will accuse you in council, then strike.
+          - generic [ref=e1631]:
+            - generic [ref=e1632]:
+              - generic [ref=e1633]: REPUTATION
+              - generic [ref=e1634]:
+                - generic [ref=e1635]: "0"
+                - generic [ref=e1636]: / 100
+              - generic [ref=e1637]:
+                - generic [ref=e1639]: −100
+                - generic [ref=e1640]: "+100"
+              - generic [ref=e1641]: "Recent: −5 council accusation · +2 NAP honoured (3 mo.) · −12 traded with Mauna"
+            - generic [ref=e1642]:
+              - generic [ref=e1643]: ACTIVE TREATIES
+              - generic [ref=e1645]: — no active treaties —
+            - generic [ref=e1646]:
+              - generic [ref=e1647]: AVAILABLE TREATIES
+              - generic [ref=e1648]:
+                - generic [ref=e1649]:
+                  - generic [ref=e1650]:
+                    - generic [ref=e1651]: Non-Aggression Pact
+                    - generic [ref=e1652]: Requires reputation ≥ 0
+                  - generic [ref=e1653]: NOT SIGNED
+                  - button "PROPOSE" [ref=e1654] [cursor=pointer]
+                - generic [ref=e1655]:
+                  - generic [ref=e1656]:
+                    - generic [ref=e1657]: Trade Agreement
+                    - generic [ref=e1658]: Requires reputation ≥ 20
+                  - generic [ref=e1659]: NOT SIGNED
+                  - button "PROPOSE" [disabled] [ref=e1660]
+                - generic [ref=e1661]:
+                  - generic [ref=e1662]:
+                    - generic [ref=e1663]: Defensive Pact
+                    - generic [ref=e1664]: Requires reputation ≥ 40
+                  - generic [ref=e1665]: NOT SIGNED
+                  - button "PROPOSE" [disabled] [ref=e1666]
+            - generic [ref=e1667]:
+              - generic [ref=e1668]: AVAILABLE ACTIONS
+              - generic [ref=e1669]:
+                - button "SEND GIFT (1,000 cr)" [ref=e1670] [cursor=pointer]
+                - button "DEMAND TRIBUTE" [ref=e1671] [cursor=pointer]
+                - button "DECLARE WAR" [ref=e1672] [cursor=pointer]
+                - button "SABOTAGE" [ref=e1673] [cursor=pointer]
+      - complementary [ref=e1674]:
+        - generic [ref=e1675]:
+          - generic [ref=e1676]: "[ COUNCIL LOG ]"
+          - generic [ref=e1677]: Rolling 24-month event memory
+        - generic [ref=e1678]:
+          - generic [ref=e1679]:
+            - generic [ref=e1680]: T+011.27
+            - generic [ref=e1681]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1682]:
+            - generic [ref=e1683]: T+011.27
+            - generic [ref=e1684]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1685]:
+            - generic [ref=e1686]: T+011.27
+            - generic [ref=e1687]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1688]:
+            - generic [ref=e1689]: T+011.27
+            - generic [ref=e1690]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1691]:
+            - generic [ref=e1692]: T+011.26
+            - generic [ref=e1693]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1694]:
+            - generic [ref=e1695]: T+011.26
+            - generic [ref=e1696]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1697]:
+            - generic [ref=e1698]: T+011.26
+            - generic [ref=e1699]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1700]:
+            - generic [ref=e1701]: T+011.26
+            - generic [ref=e1702]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1703]:
+            - generic [ref=e1704]: T+011.25
+            - generic [ref=e1705]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1706]:
+            - generic [ref=e1707]: T+011.25
+            - generic [ref=e1708]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1709]:
+            - generic [ref=e1710]: T+011.25
+            - generic [ref=e1711]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1712]:
+            - generic [ref=e1713]: T+011.25
+            - generic [ref=e1714]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1715]:
+            - generic [ref=e1716]: T+011.24
+            - generic [ref=e1717]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1718]:
+            - generic [ref=e1719]: T+011.24
+            - generic [ref=e1720]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1721]:
+            - generic [ref=e1722]: T+011.24
+            - generic [ref=e1723]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1724]:
+            - generic [ref=e1725]: T+011.24
+            - generic [ref=e1726]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1727]:
+            - generic [ref=e1728]: T+011.23
+            - generic [ref=e1729]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1730]:
+            - generic [ref=e1731]: T+011.23
+            - generic [ref=e1732]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1733]:
+            - generic [ref=e1734]: T+011.23
+            - generic [ref=e1735]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1736]:
+            - generic [ref=e1737]: T+011.23
+            - generic [ref=e1738]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1739]:
+            - generic [ref=e1740]: T+011.22
+            - generic [ref=e1741]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1742]:
+            - generic [ref=e1743]: T+011.22
+            - generic [ref=e1744]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1745]:
+            - generic [ref=e1746]: T+011.22
+            - generic [ref=e1747]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1748]:
+            - generic [ref=e1749]: T+011.22
+            - generic [ref=e1750]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1751]:
+            - generic [ref=e1752]: T+011.21
+            - generic [ref=e1753]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1754]:
+            - generic [ref=e1755]: T+011.21
+            - generic [ref=e1756]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1757]:
+            - generic [ref=e1758]: T+011.21
+            - generic [ref=e1759]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1760]:
+            - generic [ref=e1761]: T+011.21
+            - generic [ref=e1762]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1763]:
+            - generic [ref=e1764]: T+011.20
+            - generic [ref=e1765]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1766]:
+            - generic [ref=e1767]: T+011.20
+            - generic [ref=e1768]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1769]:
+            - generic [ref=e1770]: T+011.20
+            - generic [ref=e1771]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1772]:
+            - generic [ref=e1773]: T+011.20
+            - generic [ref=e1774]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1775]:
+            - generic [ref=e1776]: T+011.19
+            - generic [ref=e1777]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1778]:
+            - generic [ref=e1779]: T+011.19
+            - generic [ref=e1780]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1781]:
+            - generic [ref=e1782]: T+011.19
+            - generic [ref=e1783]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1784]:
+            - generic [ref=e1785]: T+011.19
+            - generic [ref=e1786]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1787]:
+            - generic [ref=e1788]: T+011.18
+            - generic [ref=e1789]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1790]:
+            - generic [ref=e1791]: T+011.18
+            - generic [ref=e1792]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1793]:
+            - generic [ref=e1794]: T+011.18
+            - generic [ref=e1795]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1796]:
+            - generic [ref=e1797]: T+011.18
+            - generic [ref=e1798]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1799]:
+            - generic [ref=e1800]: T+011.17
+            - generic [ref=e1801]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1802]:
+            - generic [ref=e1803]: T+011.17
+            - generic [ref=e1804]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1805]:
+            - generic [ref=e1806]: T+011.17
+            - generic [ref=e1807]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1808]:
+            - generic [ref=e1809]: T+011.17
+            - generic [ref=e1810]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1811]:
+            - generic [ref=e1812]: T+011.16
+            - generic [ref=e1813]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1814]:
+            - generic [ref=e1815]: T+011.16
+            - generic [ref=e1816]: "lattice: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1817]:
+            - generic [ref=e1818]: T+011.16
+            - generic [ref=e1819]: "salt: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1820]:
+            - generic [ref=e1821]: T+011.16
+            - generic [ref=e1822]: "broken: Colony happiness critical (0%). Strikes imminent."
+          - generic [ref=e1823]:
+            - generic [ref=e1824]: T+011.15
+            - generic [ref=e1825]: "arch-i: Power deficit detected. -32 MW shortfall."
+          - generic [ref=e1826]:
+            - generic [ref=e1827]: T+011.15
+            - generic [ref=e1828]: "lattice: Colony happiness critical (0%). Strikes imminent."
+    - contentinfo [ref=e297]:
+      - generic [ref=e298]:
+        - generic [ref=e299]: ● READY
+        - generic [ref=e300]: Viewing DIPLOMACY · select an asteroid to inspect
+      - generic [ref=e301]:
+        - button "❚❚ PAUSE" [ref=e302] [cursor=pointer]
+        - button "0.5×" [ref=e303] [cursor=pointer]
+        - button "1×" [ref=e304] [cursor=pointer]
+        - button "2×" [ref=e305] [cursor=pointer]
+        - button "4×" [ref=e306] [cursor=pointer]
+        - button "8×" [ref=e307] [cursor=pointer]
+      - generic [ref=e308]:
+        - generic [ref=e309]: SEED 0x8FA12C
+        - generic [ref=e310]: MATCH 03:42:18
+        - generic [ref=e311]: SAVE — AUTO
+        - generic [ref=e312]: ● SYNCED
+  - generic [ref=e113]:
+    - button "✕ CLOSE" [ref=e332] [cursor=pointer]
+    - generic [ref=e333]:
+      - generic [ref=e334]: THEME
+      - generic [ref=e335]:
+        - button "warn" [ref=e336] [cursor=pointer]
+        - button "cyan" [ref=e337] [cursor=pointer]
+        - button "crimson" [ref=e338] [cursor=pointer]
+        - button "verdant" [ref=e339] [cursor=pointer]
+      - generic [ref=e340]: LAYOUT
+      - generic [ref=e341]:
+        - button "compact" [ref=e342] [cursor=pointer]
+        - button "regular" [ref=e343] [cursor=pointer]
+        - button "spacious" [ref=e344] [cursor=pointer]
+      - generic [ref=e345]: EFFECTS
+      - generic [ref=e346] [cursor=pointer]:
+        - checkbox "Scanlines" [ref=e347]
+        - text: Scanlines
+      - generic [ref=e348] [cursor=pointer]:
+        - checkbox "Vignette" [ref=e349]
+        - text: Vignette
+      - generic [ref=e350]: JUMP TO
+      - generic [ref=e351]:
+        - button "Main menu" [ref=e352] [cursor=pointer]
+        - button "Sector" [ref=e353] [cursor=pointer]
+        - button "Colony" [ref=e354] [cursor=pointer]
+        - button "Sci-Tek" [ref=e355] [cursor=pointer]
+        - button "Diplomacy" [active] [ref=e356] [cursor=pointer]
+        - button "Commerce" [ref=e357] [cursor=pointer]
+        - button "Tactical" [ref=e358] [cursor=pointer]
+        - button "Black Cell" [ref=e359] [cursor=pointer]

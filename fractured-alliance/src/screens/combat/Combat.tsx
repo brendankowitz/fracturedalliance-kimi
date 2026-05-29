@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ShipGlyph } from '../../assets/ShipGlyph';
 import { MissileGlyph } from '../../assets/MissileGlyph';
 import { BombardmentGlyph } from '../../assets/BombardmentGlyph';
@@ -387,7 +387,8 @@ function OrderPanel({ selectedFleetId }: { selectedFleetId: string }) {
 
 export function Combat() {
   const [selectedFleet, setSelectedFleet] = React.useState('');
-  const fleets = useGameStore((s) => s.asteroids.flatMap((a) => a.fleets));
+  const asteroids = useGameStore((s) => s.asteroids);
+  const fleets = useMemo(() => asteroids.flatMap((a) => a.fleets), [asteroids]);
   const playerFleets = fleets.filter((f) => f.ownerId === 'helion');
   const enemyFleets = fleets.filter((f) => f.ownerId !== 'helion');
 

@@ -1,0 +1,105 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]: HELION INDUSTRIES — CONFIDENTIAL
+        - generic [ref=e10]:
+          - generic [ref=e11]:
+            - generic [ref=e12]: FRACTURED
+            - generic [ref=e13]: //
+          - generic [ref=e14]: ALLIANCE
+          - generic [ref=e15]: ─ ─ ─ A BELT-SIM IN ONE SESSION ─ ─ ─
+        - paragraph [ref=e17]: A real-time strategy game about running a mining megacorp's frontier operations in a lawless asteroid belt — where your loyalty to corporate is as fragile as the vacuum-welded habitats you build.
+        - generic [ref=e18]:
+          - generic [ref=e19]: v0.1 — alpha
+          - generic [ref=e20]: build 2026.05.27
+          - generic [ref=e21]: tutorial available
+      - generic [ref=e22]:
+        - generic [ref=e23]: "> HELION-OS / boot.seq > mount /dev/belt0 ........... [ OK ] > link comlink ............... [ OK ] > verify save-blob ........... [ OK ] > sci-tek index .............. [ 24/40 ] > warning: 1 incoming asteroid trajectory unresolved > last command: ASTEROID ARCH-I :: queue mk2-mine"
+        - generic [ref=e24]:
+          - button "▶ CONTINUE" [ref=e25] [cursor=pointer]
+          - button "+ NEW MATCH" [ref=e26] [cursor=pointer]
+          - button "TUTORIAL" [ref=e27] [cursor=pointer]
+          - button "SETTINGS" [ref=e28] [cursor=pointer]
+    - generic [ref=e29]:
+      - generic [ref=e30]:
+        - generic [ref=e31]: "[ SCENARIO ]"
+        - generic [ref=e32]:
+          - button "Fragmented Sectors Standard match. Six AI rivals, full belt, all victory paths enabled. Manager 60–120 min" [ref=e33] [cursor=pointer]:
+            - generic [ref=e34]:
+              - generic [ref=e35]: Fragmented Sectors
+              - generic [ref=e36]: Standard match. Six AI rivals, full belt, all victory paths enabled.
+            - generic [ref=e37]: Manager
+            - generic [ref=e38]: 60–120 min
+          - button "Outer Veins Intern 45–90 min" [ref=e39] [cursor=pointer]:
+            - generic [ref=e41]: Outer Veins
+            - generic [ref=e42]: Intern
+            - generic [ref=e43]: 45–90 min
+          - button "The Mauna Question Director 90–180 min" [ref=e44] [cursor=pointer]:
+            - generic [ref=e46]: The Mauna Question
+            - generic [ref=e47]: Director
+            - generic [ref=e48]: 90–180 min
+          - button "Lunch-Break Belt Manager 25–35 min" [ref=e49] [cursor=pointer]:
+            - generic [ref=e51]: Lunch-Break Belt
+            - generic [ref=e52]: Manager
+            - generic [ref=e53]: 25–35 min
+          - button "Board Review Board 120–240 min" [ref=e54] [cursor=pointer]:
+            - generic [ref=e56]: Board Review
+            - generic [ref=e57]: Board
+            - generic [ref=e58]: 120–240 min
+      - generic [ref=e59]:
+        - generic [ref=e60]: "[ SAVE SLOTS ]"
+        - table [ref=e61]:
+          - rowgroup [ref=e62]:
+            - row "SLOT NAME DAY VERDICT" [ref=e63]:
+              - columnheader "SLOT" [ref=e64]
+              - columnheader "NAME" [ref=e65]
+              - columnheader "DAY" [ref=e66]
+              - columnheader "VERDICT" [ref=e67]
+              - columnheader [ref=e68]
+          - rowgroup
+      - generic [ref=e69]:
+        - generic [ref=e70]: "[ ACHIEVEMENTS ]"
+        - generic [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]: First Blood
+            - generic [ref=e74]: Win first match
+          - generic [ref=e75]:
+            - generic [ref=e76]: Corporate Raider
+            - generic [ref=e77]: Economic victory
+          - generic [ref=e78]:
+            - generic [ref=e79]: Warlord
+            - generic [ref=e80]: Military victory
+          - generic [ref=e81]:
+            - generic [ref=e82]: Diplomat
+            - generic [ref=e83]: Diplomatic victory
+          - generic [ref=e84]:
+            - generic [ref=e85]: Mad Scientist
+            - generic [ref=e86]: Scientific victory
+          - generic [ref=e87]:
+            - generic [ref=e88]: Outlaw
+            - generic [ref=e89]: Independence victory
+          - generic [ref=e90]:
+            - generic [ref=e91]: Paranoid
+            - generic [ref=e92]: Survive Federation expedition (90 days)
+          - generic [ref=e93]:
+            - generic [ref=e94]: Ghost
+            - generic [ref=e95]: Complete match without being attacked
+          - generic [ref=e96]:
+            - generic [ref=e97]: Betrayer
+            - generic [ref=e98]: Break 3 treaties in one match
+          - generic [ref=e99]:
+            - generic [ref=e100]: Kingmaker
+            - generic [ref=e101]: Liberate 5 colonies
+          - generic [ref=e102]:
+            - generic [ref=e103]: Extortionist
+            - generic [ref=e104]: Collect blackmail tribute 10 times
+          - generic [ref=e105]:
+            - generic [ref=e106]: Asteroid Surfer
+            - generic [ref=e107]: Ram 3 asteroids with engines
+      - generic [ref=e108]:
+        - generic [ref=e109]: Original spiritual successor to Fragile Allegiance (1996). All names & assets original.
+        - generic [ref=e110]:
+          - button "CREDITS" [ref=e111] [cursor=pointer]
+          - button "QUIT" [ref=e112] [cursor=pointer]
+  - button "⚙ TWEAKS" [ref=e114] [cursor=pointer]
