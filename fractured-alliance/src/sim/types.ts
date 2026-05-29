@@ -1,6 +1,7 @@
 import type { OreKind } from '../types';
 import type { Fleet } from './fleet';
 import type { MarketState } from './market';
+import type { RaceRelations } from './diplomacy';
 
 export interface BuildingEffect {
   pwr: number;
@@ -59,4 +60,5 @@ export interface WorldState {
   events: SimEvent[];
   fleets: Fleet[];
   market: MarketState;
+  relations: Record<string, RaceRelations>;
 }

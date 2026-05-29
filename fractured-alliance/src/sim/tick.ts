@@ -1,8 +1,9 @@
 import type { AsteroidState, SimEvent, WorldState } from './types';
 import { getBuildingEffect } from './buildingEffects';
 import { createShip, createFleet } from './fleet';
-import { SHIP_CLASSES, ORES } from '../data/gameData';
+import { SHIP_CLASSES, ORES, RACES } from '../data/gameData';
 import { tickMarket, createMarket } from './market';
+import { createRelations, updateReputation } from './diplomacy';
 
 const TICKS_PER_DAY = 30;
 
@@ -98,11 +99,23 @@ export function createInitialMarket() {
 }
 
 export function tickWorld(world: WorldState): { world: WorldState; events: SimEvent[] } {
+  let nextWorldState: WorldState = { ...world };
   const nextTick = world.tick + 1;
   const newEvents: SimEvent[] = [];
 
-  const nextAsteroids = world.asteroids.map(a => tickAsteroid(a, nextTick));
-  const nextMarket = tickMarket(world.market, nextTick);
+  // Initialize relations if empty
+  if (Object.keys(nextWorldState.relations).length === 0) {
+    const initialRelations: Record<string, import('./diplomacy').RaceRelations> = {};
+    for (const race of RACES) {
+      if (race.id !== 'helion') {
+        initialRelations[race.id] = createRelations(race.id);
+      }
+    }
+    nextWorldState = { ...nextWorldState, relations: initialRelations };
+  }
+
+  const nextAsteroids = nextWorldState.asteroids.map(a => tickAsteroid(a, nextTick));
+  const nextMarket = tickMarket(nextWorldState.market, nextTick);
 
   // Generate events based on state changes
   for (const asteroid of nextAsteroids) {
@@ -124,12 +137,40 @@ export function tickWorld(world: WorldState): { world: WorldState; events: SimEv
     }
   }
 
+  // Generate reputation events (placeholder logic)
+  for (const race of RACES) {
+    if (race.id === 'helion') continue;
+    const rel = nextWorldState.relations[race.id];
+    if (!rel) continue;
+    const hasTradeTreaty = rel.treaties.includes('trade');
+    if (hasTradeTreaty && nextTick % 30 === 0) {
+      nextWorldState = updateReputation(nextWorldState, race.id, 2);
+      newEvents.push({
+        id: Date.now() + Math.random(),
+        t: formatTick(nextTick),
+        kind: 'ally',
+        text: `${race.id}: Trade bonus. Reputation +2.`,
+      });
+    }
+    const combatPenalty = nextAsteroids.some(a => a.fleets.some(f => f.ownerId === race.id && f.ships.length > 0));
+    if (combatPenalty && nextTick % 30 === 0) {
+      nextWorldState = updateReputation(nextWorldState, race.id, -3);
+      newEvents.push({
+        id: Date.now() + Math.random(),
+        t: formatTick(nextTick),
+        kind: 'warn',
+        text: `${race.id}: Combat penalty. Reputation -3.`,
+      });
+    }
+  }
+
   const nextWorld: WorldState = {
-    ...world,
+    ...nextWorldState,
     tick: nextTick,
     asteroids: nextAsteroids,
     market: nextMarket,
-    events: [...newEvents, ...world.events].slice(0, 50),
+    events: [...newEvents, ...nextWorldState.events].slice(0, 50),
+    relations: nextWorldState.relations,
   };
 
   return { world: nextWorld, events: newEvents };

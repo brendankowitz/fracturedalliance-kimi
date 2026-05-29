@@ -1,9 +1,10 @@
 import { create } from 'zustand';
-import type { ScreenId, GameSettings, SaveSlot, OreKind } from '../types';
+import type { ScreenId, GameSettings, SaveSlot, OreKind, TreatyKind } from '../types';
 import type { AsteroidState, SimEvent } from '../sim/types';
 import type { MarketState } from '../sim/market';
 import { tickWorld, createInitialMarket } from '../sim/tick';
 import { buyOre as buyOreSim, sellOre as sellOreSim } from '../sim/market';
+import { proposeTreaty as proposeTreatySim, breakTreaty as breakTreatySim } from '../sim/diplomacy';
 import { loadSettings, persistSettings, loadSaves } from './saveLoad';
 
 interface GameState {
@@ -24,6 +25,9 @@ interface GameState {
   federationStanding: number;
   saves: SaveSlot[];
   market: MarketState;
+  relations: Record<string, import('../sim/diplomacy').RaceRelations>;
+  proposeTreaty: (raceId: string, treaty: TreatyKind) => void;
+  breakTreaty: (raceId: string, treaty: TreatyKind) => void;
 
   setScreen: (s: ScreenId) => void;
   setPaused: (p: boolean) => void;
@@ -148,6 +152,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   federationStanding: 62,
   saves: loadSaves(),
   market: createInitialMarket(),
+  relations: {},
 
   setScreen: (s) => set({ screen: s }),
   setPaused: (p) => set({ paused: p }),
@@ -167,6 +172,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       events: state.events,
       fleets: [],
       market: state.market,
+      relations: state.relations,
     });
 
     set({
@@ -174,6 +180,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       asteroids: world.world.asteroids,
       events: world.world.events,
       alerts: world.events.length,
+      relations: world.world.relations,
     });
   },
 
@@ -262,6 +269,26 @@ export const useGameStore = create<GameState>((set, get) => ({
         },
       };
       return { treasury: result.newTreasury, asteroids: nextAsteroids };
+    });
+  },
+
+  proposeTreaty: (raceId, treaty) => {
+    set((state) => {
+      const result = proposeTreatySim({ ...state, relations: state.relations } as any, raceId, treaty);
+      if (!result.world) return state;
+      const updates: any = { relations: result.world.relations };
+      if (result.event) updates.events = [result.event, ...state.events].slice(0, 50);
+      return updates;
+    });
+  },
+
+  breakTreaty: (raceId, treaty) => {
+    set((state) => {
+      const result = breakTreatySim({ ...state, relations: state.relations } as any, raceId, treaty);
+      if (!result.world) return state;
+      const updates: any = { relations: result.world.relations };
+      if (result.event) updates.events = [result.event, ...state.events].slice(0, 50);
+      return updates;
     });
   },
 }));
