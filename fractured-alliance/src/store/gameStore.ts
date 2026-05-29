@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ScreenId, GameSettings, SaveSlot, OreKind, TreatyKind } from '../types';
+import type { ScreenId, GameSettings, SaveSlot, OreKind, TreatyKind, Difficulty } from '../types';
 import type { AsteroidState, SimEvent, WorldState } from '../sim/types';
 import type { MarketState } from '../sim/market';
 import { tickWorld, createInitialMarket } from '../sim/tick';
@@ -7,6 +7,7 @@ import { buyOre as buyOreSim, sellOre as sellOreSim } from '../sim/market';
 import { proposeTreaty as proposeTreatySim, breakTreaty as breakTreatySim } from '../sim/diplomacy';
 import { serializeWorld, deserializeWorld } from '../sim/serialize';
 import { persistSave, loadSaveData, loadSettings, persistSettings, loadSaves } from './saveLoad';
+import { checkAchievements } from '../sim/achievements';
 import { ASTEROIDS, AGENTS } from '../data/gameData';
 import { resolveMission } from '../sim/espionage';
 
@@ -29,6 +30,7 @@ interface GameState {
   saves: SaveSlot[];
   market: MarketState;
   relations: Record<string, import('../sim/diplomacy').RaceRelations>;
+  achievements: string[];
   proposeTreaty: (raceId: string, treaty: TreatyKind) => void;
   breakTreaty: (raceId: string, treaty: TreatyKind) => void;
 
@@ -37,6 +39,7 @@ interface GameState {
   setSpeed: (s: number) => void;
   advanceTick: () => void;
   setSettings: (s: Partial<GameSettings>) => void;
+  setDifficulty: (d: Difficulty) => void;
   setSelectedAsteroid: (id: string) => void;
   setSelectedBuilding: (id: string | null) => void;
   placeBuilding: (cell: string, kind: string) => void;
@@ -154,6 +157,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     density: 'regular',
     scanlines: false,
     vignette: true,
+    difficulty: 'director',
   },
   selectedAsteroid: 'arch-i',
   selectedBuilding: 'mine2',
@@ -173,6 +177,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   saves: loadSaves(),
   market: createInitialMarket(),
   relations: {},
+  achievements: [],
 
   setScreen: (s) => set({ screen: s }),
   setPaused: (p) => set({ paused: p }),
@@ -195,6 +200,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       relations: state.relations,
     });
 
+    const newlyUnlocked = checkAchievements(get(), new Set(get().achievements));
+    if (newlyUnlocked.length > 0) {
+      set({ achievements: [...get().achievements, ...newlyUnlocked] });
+    }
+
     set({
       tick: world.world.tick,
       asteroids: world.world.asteroids,
@@ -207,6 +217,13 @@ export const useGameStore = create<GameState>((set, get) => ({
   setSettings: (s) => {
     set((state) => {
       const next = { ...state.settings, ...s };
+      persistSettings(next);
+      return { settings: next };
+    });
+  },
+  setDifficulty: (d) => {
+    set((state) => {
+      const next = { ...state.settings, difficulty: d };
       persistSettings(next);
       return { settings: next };
     });

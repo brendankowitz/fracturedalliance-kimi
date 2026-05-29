@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
+import { ACHIEVEMENTS } from '../../sim/achievements';
 
 interface Scenario {
   id: string;
@@ -22,6 +23,7 @@ export function MainMenu() {
   const setScreen = useGameStore((s) => s.setScreen);
   const saves = useGameStore((s) => s.saves);
   const loadSave = useGameStore((s) => s.loadSave);
+  const achievements = useGameStore((s) => s.achievements);
 
   const handleEnter = () => {
     setScreen('sector');
@@ -168,6 +170,29 @@ export function MainMenu() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div>
+          <div className="t-eyebrow" style={{ marginTop: 8 }}>[ ACHIEVEMENTS ]</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 8 }}>
+            {ACHIEVEMENTS.map((ach) => {
+              const unlocked = achievements.includes(ach.id);
+              return (
+                <div
+                  key={ach.id}
+                  style={{
+                    padding: '8px 10px',
+                    border: '1px solid ' + (unlocked ? 'var(--warn-dim)' : 'var(--line-soft)'),
+                    background: unlocked ? 'var(--bg-elev)' : 'transparent',
+                    opacity: unlocked ? 1 : 0.45,
+                  }}
+                >
+                  <div style={{ fontSize: 12, color: unlocked ? 'var(--warn)' : 'var(--fg-60)' }}>{ach.name}</div>
+                  <div className="t-meta" style={{ marginTop: 2 }}>{ach.desc}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between', alignItems: 'center' }}>

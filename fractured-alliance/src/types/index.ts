@@ -146,6 +146,7 @@ export interface GameSettings {
   density: 'compact' | 'regular' | 'spacious';
   scanlines: boolean;
   vignette: boolean;
+  difficulty: Difficulty;
 }
 
 export interface SaveSlot {
