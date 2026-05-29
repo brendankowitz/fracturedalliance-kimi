@@ -1,0 +1,606 @@
+/* =========================================================================
+   FRACTURED // ALLIANCE — design system
+   Helion Corp Operations Console
+   ========================================================================= */
+
+:root {
+  /* Surfaces — cool charcoal stack */
+  --bg-void:      oklch(0.14 0.012 240);
+  --bg-base:      oklch(0.18 0.013 240);
+  --bg-raised:    oklch(0.22 0.014 240);
+  --bg-elev:      oklch(0.27 0.014 240);
+  --bg-input:     oklch(0.16 0.012 240);
+
+  /* Foreground */
+  --fg-100:       oklch(0.96 0.008 80);
+  --fg-80:        oklch(0.82 0.010 80);
+  --fg-60:        oklch(0.66 0.012 240);
+  --fg-40:        oklch(0.48 0.012 240);
+  --fg-20:        oklch(0.34 0.012 240);
+
+  /* Lines */
+  --line-soft:    oklch(0.28 0.014 240);
+  --line:         oklch(0.36 0.018 240);
+  --line-hot:     oklch(0.48 0.020 240);
+
+  /* Signal colors */
+  --signal:       oklch(0.78 0.14 200);
+  --signal-dim:   oklch(0.55 0.10 200);
+  --signal-bg:    oklch(0.30 0.06 200 / 0.32);
+
+  --warn:         oklch(0.80 0.15 70);
+  --warn-dim:     oklch(0.60 0.12 70);
+  --warn-bg:      oklch(0.32 0.07 70 / 0.30);
+
+  --crit:         oklch(0.72 0.18 18);
+  --crit-dim:     oklch(0.55 0.14 18);
+  --crit-bg:      oklch(0.30 0.09 18 / 0.32);
+
+  --illegal:      oklch(0.70 0.18 330);
+  --illegal-dim:  oklch(0.52 0.14 330);
+  --illegal-bg:   oklch(0.28 0.09 330 / 0.32);
+
+  --ally:         oklch(0.74 0.13 150);
+  --ally-dim:     oklch(0.56 0.10 150);
+  --ally-bg:      oklch(0.28 0.06 150 / 0.30);
+
+  /* Iso building tile tones */
+  --tile-top:     oklch(0.46 0.022 240);
+  --tile-top-lit: oklch(0.54 0.025 240);
+  --tile-side-r:  oklch(0.22 0.014 240);
+  --tile-side-l:  oklch(0.32 0.018 240);
+  --tile-edge:    oklch(0.12 0.010 240);
+  --tile-pad:     oklch(0.18 0.012 240);
+  --tile-water:   oklch(0.55 0.10 200);
+  --tile-water-bg: oklch(0.32 0.06 200 / 0.6);
+  --tile-glass:    oklch(0.38 0.10 150 / 0.55);
+  --tile-glass-d:  oklch(0.30 0.08 150 / 0.65);
+  --tile-plant:    oklch(0.70 0.14 150);
+  --tile-window-d: oklch(0.32 0.06 70 / 0.5);
+  --tile-window-d2:oklch(0.32 0.06 70 / 0.3);
+  --tile-steam:    oklch(0.55 0.04 240);
+
+  /* Fonts */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'Menlo', monospace;
+
+  /* Geometry */
+  --r-sm: 2px;
+  --r:    3px;
+  --r-lg: 6px;
+
+  /* Density (overridden by tweak) */
+  --pad: 14px;
+  --gap: 10px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: var(--bg-void);
+  color: var(--fg-100);
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 1.45;
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(1px 1px at 12% 18%, oklch(0.85 0.02 200 / 0.45) 50%, transparent 100%),
+    radial-gradient(1px 1px at 78% 64%, oklch(0.85 0.02 200 / 0.30) 50%, transparent 100%),
+    radial-gradient(1px 1px at 42% 88%, oklch(0.85 0.02 80 / 0.35) 50%, transparent 100%),
+    radial-gradient(1px 1px at 91% 22%, oklch(0.85 0.02 200 / 0.35) 50%, transparent 100%),
+    radial-gradient(1px 1px at 27% 52%, oklch(0.85 0.02 200 / 0.25) 50%, transparent 100%),
+    radial-gradient(1px 1px at 65% 8%,  oklch(0.85 0.02 80 / 0.30) 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
+input, select, textarea { font: inherit; color: inherit; }
+
+/* =========================================================================
+   Type system
+   ========================================================================= */
+.t-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.t-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-40);
+}
+.t-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-60);
+}
+.t-data {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.t-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-60);
+}
+
+/* =========================================================================
+   App shell — fixed 1440x900 canvas, scaled to viewport
+   ========================================================================= */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+.canvas {
+  width: 1440px;
+  height: 900px;
+  display: grid;
+  grid-template-rows: 44px 1fr 28px;
+  background: var(--bg-void);
+  overflow: hidden;
+  position: relative;
+  transform-origin: center;
+}
+
+/* =========================================================================
+   Top bar (TASKBAR)
+   ========================================================================= */
+.taskbar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: stretch;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--bg-raised), var(--bg-base));
+  user-select: none;
+}
+.taskbar-brand {
+  display: flex; align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+  border-right: 1px solid var(--line);
+}
+.brand-mark {
+  width: 18px; height: 18px;
+  position: relative;
+}
+.brand-mark::before, .brand-mark::after {
+  content: ''; position: absolute; inset: 0;
+  border: 1px solid var(--warn);
+}
+.brand-mark::before { clip-path: polygon(0 0, 100% 0, 100% 50%, 50% 50%, 50% 100%, 0 100%); }
+.brand-mark::after {
+  clip-path: polygon(50% 50%, 100% 50%, 100% 100%, 50% 100%);
+  background: var(--warn);
+  border: none;
+}
+.brand-text {
+  display: flex; flex-direction: column; line-height: 1;
+}
+.brand-name {
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--fg-100);
+}
+.brand-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--fg-40);
+  margin-top: 2px;
+}
+
+.taskbar-nav {
+  display: flex;
+  align-items: stretch;
+}
+.taskbar-nav button {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-60);
+  border-right: 1px solid var(--line-soft);
+  position: relative;
+  transition: color 120ms, background 120ms;
+}
+.taskbar-nav button .nav-key {
+  font-size: 9px;
+  color: var(--fg-40);
+  border: 1px solid var(--line);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.taskbar-nav button:hover {
+  color: var(--fg-100);
+  background: var(--bg-elev);
+}
+.taskbar-nav button.active {
+  color: var(--warn);
+  background: var(--bg-base);
+}
+.taskbar-nav button.active::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: var(--warn);
+}
+.taskbar-nav button[disabled] {
+  color: var(--fg-20);
+  cursor: not-allowed;
+}
+
+.taskbar-status {
+  display: flex; align-items: center; gap: 18px;
+  padding: 0 16px;
+  border-left: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--fg-60);
+}
+.status-chip {
+  display: flex; align-items: center; gap: 6px;
+}
+.status-chip .dot {
+  width: 7px; height: 7px;
+  background: var(--signal);
+  box-shadow: 0 0 6px var(--signal);
+}
+.status-chip.warn .dot { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+.status-chip.crit .dot { background: var(--crit); box-shadow: 0 0 6px var(--crit); animation: pulse 1s infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* =========================================================================
+   Footer (statusbar)
+   ========================================================================= */
+.statusbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  background: var(--bg-base);
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  color: var(--fg-40);
+}
+.statusbar .center {
+  display: flex; gap: 16px; align-items: center;
+}
+.statusbar .end {
+  display: flex; gap: 14px; justify-content: flex-end;
+  color: var(--fg-60);
+}
+
+/* =========================================================================
+   Generic surfaces
+   ========================================================================= */
+.panel {
+  background: var(--bg-base);
+  border: 1px solid var(--line-soft);
+  position: relative;
+}
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--bg-raised);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-80);
+}
+.panel-head .head-meta {
+  color: var(--fg-40);
+  font-weight: 400;
+}
+.panel-body { padding: 12px; }
+
+.bracket {
+  position: relative;
+}
+.bracket::before, .bracket::after {
+  content: ''; position: absolute;
+  width: 8px; height: 8px;
+  border: 1px solid var(--warn);
+}
+.bracket::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+.bracket::after  { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 7px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-100);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: all 120ms;
+  position: relative;
+}
+.btn:hover { background: var(--bg-raised); border-color: var(--line-hot); }
+.btn.primary {
+  background: var(--warn-bg);
+  border-color: var(--warn-dim);
+  color: var(--warn);
+}
+.btn.primary:hover { background: oklch(0.32 0.10 70 / 0.55); border-color: var(--warn); }
+.btn.signal {
+  background: var(--signal-bg);
+  border-color: var(--signal-dim);
+  color: var(--signal);
+}
+.btn.crit {
+  background: var(--crit-bg);
+  border-color: var(--crit-dim);
+  color: var(--crit);
+}
+.btn.illegal {
+  background: var(--illegal-bg);
+  border-color: var(--illegal-dim);
+  color: var(--illegal);
+}
+.btn.ghost {
+  background: transparent;
+}
+.btn.sm { padding: 4px 9px; font-size: 10px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Tag / chip */
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 7px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-60);
+  background: var(--bg-elev);
+  border: 1px solid var(--line-soft);
+}
+.tag.signal { color: var(--signal); border-color: var(--signal-dim); }
+.tag.warn { color: var(--warn); border-color: var(--warn-dim); }
+.tag.crit { color: var(--crit); border-color: var(--crit-dim); }
+.tag.illegal { color: var(--illegal); border-color: var(--illegal-dim); }
+.tag.ally { color: var(--ally); border-color: var(--ally-dim); }
+
+/* Stat cell */
+.stat {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.stat-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--fg-100);
+  line-height: 1;
+}
+.stat-value.signal { color: var(--signal); }
+.stat-value.warn { color: var(--warn); }
+.stat-value.crit { color: var(--crit); }
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-40);
+}
+.stat-delta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-60);
+}
+.stat-delta.up { color: var(--ally); }
+.stat-delta.down { color: var(--crit); }
+
+/* Inline meter */
+.meter {
+  height: 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--line-soft);
+  position: relative;
+  overflow: hidden;
+}
+.meter > div {
+  height: 100%;
+  background: var(--signal);
+  transition: width 200ms;
+}
+.meter.warn > div { background: var(--warn); }
+.meter.crit > div { background: var(--crit); }
+.meter.ally > div { background: var(--ally); }
+
+/* =========================================================================
+   Building tile animations
+   ========================================================================= */
+@keyframes fa-spin { to { transform: rotate(360deg); } }
+@keyframes fa-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes fa-flicker {
+  0%, 100% { opacity: 1; }
+  4% { opacity: 0.4; }
+  8% { opacity: 1; }
+  32% { opacity: 0.6; }
+  42% { opacity: 1; }
+  68% { opacity: 0.5; }
+  74% { opacity: 1; }
+}
+@keyframes fa-rise {
+  0%   { transform: translateY(0)   scale(1);   opacity: 0; }
+  18%  { opacity: 0.7; }
+  100% { transform: translateY(-7px) scale(1.5); opacity: 0; }
+}
+@keyframes fa-conveyor { to { stroke-dashoffset: -6; } }
+@keyframes fa-wave {
+  0%   { transform: scale(0.4); opacity: 0.95; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@keyframes fa-shake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(0.15px, -0.1px); }
+  50% { transform: translate(-0.15px, 0.15px); }
+  75% { transform: translate(0.1px, -0.15px); }
+}
+@keyframes fa-thrust {
+  0%, 100% { transform: scaleX(0.8); opacity: 0.55; }
+  50%      { transform: scaleX(1.5); opacity: 1; }
+}
+@keyframes fa-thrust-v {
+  0%, 100% { transform: scaleY(0.65); opacity: 0.55; }
+  50%      { transform: scaleY(1.4);  opacity: 1; }
+}
+@keyframes fa-charge {
+  0%   { transform: scale(0.4); opacity: 0.3; }
+  50%  { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(0.4); opacity: 0.3; }
+}
+
+.fa-spin     { transform-box: view-box; transform-origin: center; animation: fa-spin 3s linear infinite; }
+.fa-spin-slow{ transform-box: view-box; transform-origin: center; animation: fa-spin 14s linear infinite; }
+.fa-pulse    { animation: fa-pulse 1.6s ease-in-out infinite; }
+.fa-pulse-slow { animation: fa-pulse 3.2s ease-in-out infinite; }
+.fa-flicker  { animation: fa-flicker 4s ease-in-out infinite; }
+.fa-flicker-2{ animation: fa-flicker 5s ease-in-out infinite -0.7s; }
+.fa-flicker-3{ animation: fa-flicker 3.6s ease-in-out infinite -1.4s; }
+.fa-rise     { transform-box: fill-box; transform-origin: center; animation: fa-rise 2.6s ease-out infinite; }
+.fa-rise-2   { transform-box: fill-box; transform-origin: center; animation: fa-rise 3s ease-out infinite -1.2s; }
+.fa-rise-3   { transform-box: fill-box; transform-origin: center; animation: fa-rise 2.2s ease-out infinite -0.5s; }
+.fa-conveyor { animation: fa-conveyor 0.8s linear infinite; }
+.fa-wave     { transform-box: fill-box; transform-origin: center; animation: fa-wave 2.4s ease-out infinite; }
+.fa-wave-2   { transform-box: fill-box; transform-origin: center; animation: fa-wave 2.4s ease-out infinite -0.8s; }
+.fa-wave-3   { transform-box: fill-box; transform-origin: center; animation: fa-wave 2.4s ease-out infinite -1.6s; }
+.fa-shake    { transform-box: fill-box; transform-origin: center; animation: fa-shake 0.18s linear infinite; }
+.fa-thrust   { transform-box: fill-box; transform-origin: left center; animation: fa-thrust 0.7s ease-in-out infinite; }
+.fa-thrust-2 { transform-box: fill-box; transform-origin: left center; animation: fa-thrust 0.8s ease-in-out infinite -0.25s; }
+.fa-thrust-3 { transform-box: fill-box; transform-origin: left center; animation: fa-thrust 0.65s ease-in-out infinite -0.5s; }
+.fa-charge   { transform-box: fill-box; transform-origin: center; animation: fa-charge 2.2s ease-in-out infinite; }
+.fa-blink    { animation: fa-pulse 1.2s steps(2, end) infinite; }
+.fa-blink-2  { animation: fa-pulse 0.9s steps(2, end) infinite -0.4s; }
+
+@keyframes fa-spin-fast { to { transform: rotate(360deg); } }
+@keyframes fa-glow-soft {
+  0%, 100% { opacity: 0.55; filter: drop-shadow(0 0 0 transparent); }
+  50%      { opacity: 1;    filter: drop-shadow(0 0 1.5px currentColor); }
+}
+@keyframes fa-trail-dash { to { stroke-dashoffset: -8; } }
+@keyframes fa-warhead-burst {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50%      { transform: scale(1.25); opacity: 1; }
+}
+.fa-spin-fast { transform-box: view-box; transform-origin: center; animation: fa-spin-fast 1.2s linear infinite; }
+.fa-glow-soft { animation: fa-glow-soft 1.4s ease-in-out infinite; }
+.fa-glow-soft-2 { animation: fa-glow-soft 1.4s ease-in-out infinite -0.4s; }
+.fa-trail     { animation: fa-trail-dash 0.6s linear infinite; }
+.fa-burst     { transform-box: fill-box; transform-origin: center; animation: fa-warhead-burst 1.4s ease-in-out infinite; }
+
+/* Scrollbars */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: var(--bg-input); }
+*::-webkit-scrollbar-thumb { background: var(--line); border: 1px solid var(--bg-base); }
+*::-webkit-scrollbar-thumb:hover { background: var(--line-hot); }
+
+/* =========================================================================
+   Main content area
+   ========================================================================= */
+.screen {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 20%, oklch(0.22 0.020 240) 0%, var(--bg-void) 60%);
+}
+
+.screen-enter {
+  animation: screen-in 220ms ease-out;
+}
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================================
+   Modal / overlay
+   ========================================================================= */
+.overlay {
+  position: absolute; inset: 0;
+  background: oklch(0.10 0.012 240 / 0.75);
+  display: grid; place-items: center;
+  z-index: 50;
+  backdrop-filter: blur(2px);
+  animation: fade-in 180ms;
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* =========================================================================
+   Race tokens
+   ========================================================================= */
+.race-helion   { --race-color: var(--warn); --race-bg: var(--warn-bg); }
+.race-kryll    { --race-color: oklch(0.74 0.14 290); --race-bg: oklch(0.30 0.08 290 / 0.32); }
+.race-motkaj   { --race-color: var(--crit); --race-bg: var(--crit-bg); }
+.race-achar    { --race-color: var(--ally); --race-bg: var(--ally-bg); }
+.race-brakkat  { --race-color: oklch(0.74 0.12 250); --race-bg: oklch(0.30 0.06 250 / 0.32); }
+.race-rigal    { --race-color: var(--signal); --race-bg: var(--signal-bg); }
+.race-mauna    { --race-color: var(--illegal); --race-bg: var(--illegal-bg); }
+
+.race-token {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  background: var(--race-bg);
+  border: 1px solid var(--race-color);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--race-color);
+}
+
+/* =========================================================================
+   Scanline overlay
+   ========================================================================= */
+.scanlines::after {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    oklch(0 0 0 / 0.08) 3px
+  );
+  mix-blend-mode: multiply;
+  z-index: 100;
+}
+
+/* Vignette */
+.canvas::after {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 60%, oklch(0 0 0 / 0.55) 100%);
+  z-index: 99;
+}

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fractured // Alliance — Asset Library (PRINT)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Always-on print-friendly tweaks */
+    html, body {
+      background: var(--bg-void);
+      color: var(--fg-100);
+      overflow: auto !important;
+    }
+    body::before { display: none; }  /* drop starfield - bakes into noise in PDFs */
+    .canvas::after { display: none; } /* drop vignette */
+
+    /* Print rules */
+    @page {
+      size: A3 portrait;
+      margin: 12mm;
+    }
+    @media print {
+      html, body {
+        background: var(--bg-void) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        animation: none !important;
+        transition: none !important;
+      }
+      /* Stop the page being scaled into a phone-sized box */
+      #root > div {
+        max-width: none !important;
+        margin: 0 !important;
+        min-height: 0 !important;
+      }
+      header {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+      footer {
+        break-before: avoid;
+        page-break-before: avoid;
+      }
+      /* Each Section (sheet) starts on its own page */
+      main > section {
+        break-before: page;
+        page-break-before: always;
+        break-inside: avoid-page;
+        margin-bottom: 0 !important;
+        padding-bottom: 8mm;
+      }
+      main > section:first-child {
+        break-before: auto;
+        page-break-before: auto;
+      }
+      /* Don't break a grid in half */
+      main > section > div {
+        break-inside: avoid;
+      }
+      /* Cards inside grids shouldn't break either */
+      main > section > div > div {
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script src="data.js"></script>
+  <script type="text/babel" src="components/assets.jsx"></script>
+  <script type="text/babel" src="components/tile-assets.jsx"></script>
+  <script type="text/babel" src="asset-sheet.jsx"></script>
+
+  <!-- Auto-print: wait for fonts + Babel + React render -->
+  <script type="text/babel">
+    (async function autoPrint() {
+      // Wait for fonts
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch (e) {}
+      }
+      // Poll until React has mounted content
+      const start = Date.now();
+      while (Date.now() - start < 10000) {
+        const root = document.getElementById('root');
+        if (root && root.querySelector('main section')) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      // Extra settle for animations / late layout
+      await new Promise(r => setTimeout(r, 600));
+      window.print();
+    })();
+  </script>
+</body>
+</html>
