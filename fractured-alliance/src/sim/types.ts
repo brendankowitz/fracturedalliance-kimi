@@ -41,6 +41,13 @@ export interface AsteroidState {
     note?: string;
   }[];
   fleets: Fleet[];
+  x?: number;
+  y?: number;
+  size?: 'S' | 'M' | 'L' | 'XL';
+  name?: string;
+  deposits?: import('../types').OreKind[];
+  status?: 'home' | 'colony' | 'building' | 'unclaimed' | 'foreign' | 'hostile';
+  threat?: 'none' | 'fleet' | 'ramming' | 'engines';
 }
 
 export interface SimEvent {

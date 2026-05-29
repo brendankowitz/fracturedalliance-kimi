@@ -1,20 +1,22 @@
 import { useGameStore } from '../../store/gameStore';
-import { ASTEROIDS, RACES, ORES } from '../../data/gameData';
+import { RACES, ORES } from '../../data/gameData';
 import { byId } from '../../data/gameData';
-import type { AsteroidDef, RaceDef } from '../../types';
+import type { AsteroidState } from '../../sim/types';
+import type { RaceDef } from '../../types';
 
 export function SectorMap() {
   const selectedId = useGameStore((s) => s.selectedAsteroid);
   const setSelectedAsteroid = useGameStore((s) => s.setSelectedAsteroid);
   const setScreen = useGameStore((s) => s.setScreen);
+  const asteroids = useGameStore((s) => s.asteroids);
 
-  const selected = ASTEROIDS.find((a) => a.id === selectedId);
+  const selected = asteroids.find((a) => a.id === selectedId);
   const owner = selected?.ownerId ? byId(RACES, selected.ownerId) : undefined;
 
   return (
     <div className="screen screen-enter" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', height: '100%' }}>
       <SectorCanvas
-        asteroids={ASTEROIDS}
+        asteroids={asteroids}
         selectedId={selectedId}
         onSelect={(id: string) => setSelectedAsteroid(id)}
       />
@@ -37,7 +39,7 @@ function SectorCanvas({
   selectedId,
   onSelect,
 }: {
-  asteroids: AsteroidDef[];
+  asteroids: AsteroidState[];
   selectedId: string;
   onSelect: (id: string) => void;
 }) {
@@ -48,7 +50,7 @@ function SectorCanvas({
         <div>
           <div className="t-eyebrow" style={{ color: 'var(--warn)' }}>[ SECTOR 7-DELTA / FRAGMENTED SECTORS ]</div>
           <div style={{ fontSize: 22, fontWeight: 500, marginTop: 6, letterSpacing: '-0.02em' }}>Belt Overview</div>
-          <div className="t-meta" style={{ marginTop: 4 }}>15 charted bodies · 5 Helion · 8 foreign · 2 unclaimed</div>
+          <div className="t-meta" style={{ marginTop: 4 }}>{asteroids.length} charted bodies</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn sm ghost">FILTER</button>
@@ -135,21 +137,18 @@ function AsteroidMarker({
   selected,
   onClick,
 }: {
-  asteroid: AsteroidDef;
+  asteroid: AsteroidState;
   selected: boolean;
   onClick: () => void;
 }) {
-  const size = { S: 12, M: 16, L: 22, XL: 30 }[asteroid.size];
-  const ownerRace = asteroid.ownerId ? byId(RACES, asteroid.ownerId) : undefined;
-  const color = !ownerRace
+  const size = { S: 12, M: 16, L: 22, XL: 30 }[asteroid.size ?? 'M'];
+  const color = !asteroid.ownerId
     ? 'var(--fg-40)'
     : asteroid.ownerId === 'helion'
       ? 'var(--warn)'
       : asteroid.ownerId === 'mauna'
-        ? 'var(--illegal)'
-        : asteroid.ownerId && ['kryll', 'motkaj'].includes(asteroid.ownerId)
-          ? 'var(--crit)'
-          : 'var(--ally)';
+        ? 'var(--crit)'
+        : 'var(--signal)';
 
   return (
     <button
@@ -194,24 +193,13 @@ function AsteroidMarker({
         boxShadow: selected ? `0 0 12px ${color}` : 'none',
       }} />
       {/* threat indicator */}
-      {asteroid.threat === 'ramming' && (
+      {asteroid.threat && asteroid.threat !== 'none' && (
         <div style={{
           position: 'absolute', top: -6, right: -6,
-          width: 6, height: 6, background: 'var(--crit)',
-          animation: 'pulse 0.6s infinite',
+          width: 8, height: 8, background: 'var(--crit)',
+          borderRadius: '50%',
+          animation: 'pulse 0.8s infinite',
         }} />
-      )}
-      {asteroid.threat === 'fleet' && (
-        <div style={{
-          position: 'absolute', top: -4, right: -4,
-          width: 4, height: 4, background: 'var(--crit)',
-        }} />
-      )}
-      {asteroid.threat === 'engines' && (
-        <div style={{
-          position: 'absolute', bottom: -3, left: -3,
-          fontFamily: 'var(--font-mono)', fontSize: 8, color: 'var(--warn)',
-        }}>◀◀</div>
       )}
       {/* name */}
       <div style={{
@@ -223,7 +211,7 @@ function AsteroidMarker({
         whiteSpace: 'nowrap',
         marginTop: 2,
       }}>
-        {asteroid.name.toUpperCase()}
+        {(asteroid.name ?? asteroid.id).toUpperCase()}
         <span style={{ color: 'var(--fg-40)', marginLeft: 4 }}>{asteroid.size}</span>
       </div>
     </button>
@@ -244,7 +232,7 @@ function SectorInspector({
   owner,
   onJumpToColony,
 }: {
-  asteroid: AsteroidDef | undefined;
+  asteroid: AsteroidState | undefined;
   owner: RaceDef | undefined;
   onJumpToColony: () => void;
 }) {
@@ -263,7 +251,7 @@ function SectorInspector({
           <div className="tag warn">{asteroid.size}-class</div>
         </div>
         <div className="t-meta" style={{ marginTop: 4 }}>
-          coord ({asteroid.x.toString().padStart(2, '0')}.{asteroid.y.toString().padStart(2, '0')}) · grid {asteroid.size === 'S' ? '5×5' : asteroid.size === 'M' ? '7×7' : asteroid.size === 'L' ? '9×9' : '11×11'}
+          coord ({(asteroid.x ?? 0).toString().padStart(2, '0')}.{(asteroid.y ?? 0).toString().padStart(2, '0')}) · grid {asteroid.size === 'S' ? '5×5' : asteroid.size === 'M' ? '7×7' : asteroid.size === 'L' ? '9×9' : '11×11'}
         </div>
       </div>
 
@@ -289,15 +277,15 @@ function SectorInspector({
           <div className="t-eyebrow">VITALS</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 12 }}>
             <div className="stat">
-              <div className="stat-value">{asteroid.pop}</div>
+              <div className="stat-value">{asteroid.resources.pop}</div>
               <div className="stat-label">Population</div>
             </div>
             <div className="stat">
-              <div className={'stat-value ' + (asteroid.happiness < 50 ? 'crit' : asteroid.happiness < 70 ? 'warn' : '')}>{asteroid.happiness}</div>
+              <div className={'stat-value ' + (asteroid.resources.happiness < 50 ? 'crit' : asteroid.resources.happiness < 70 ? 'warn' : '')}>{asteroid.resources.happiness}</div>
               <div className="stat-label">Happiness</div>
             </div>
             <div className="stat">
-              <div className={'stat-value ' + (asteroid.rad > 30 ? 'crit' : asteroid.rad > 10 ? 'warn' : '')}>{asteroid.rad}</div>
+              <div className={'stat-value ' + (asteroid.resources.rad > 30 ? 'crit' : asteroid.resources.rad > 10 ? 'warn' : '')}>{asteroid.resources.rad}</div>
               <div className="stat-label">Radiation</div>
             </div>
             <div className="stat">
@@ -312,7 +300,7 @@ function SectorInspector({
       <div style={{ padding: 18, borderBottom: '1px solid var(--line-soft)' }}>
         <div className="t-eyebrow">DEPOSITS · GEO SURVEY</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
-          {asteroid.deposits.map((d) => {
+          {(asteroid.deposits ?? []).map((d) => {
             const ore = ORES.find((o) => o.id === d);
             const yieldVal = Math.round(Math.random() * 800 + 200); // mock
             return (
@@ -328,7 +316,7 @@ function SectorInspector({
       </div>
 
       {/* Threat warning */}
-      {asteroid.threat !== 'none' && (
+      {asteroid.threat && asteroid.threat !== 'none' && (
         <div style={{ padding: 18, borderBottom: '1px solid var(--line-soft)', background: 'var(--crit-bg)' }}>
           <div className="t-eyebrow" style={{ color: 'var(--crit)' }}>⚠ THREAT INTEL</div>
           <div style={{ marginTop: 8, fontSize: 12, color: 'var(--fg-100)' }}>

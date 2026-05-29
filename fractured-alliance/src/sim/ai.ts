@@ -1,5 +1,4 @@
-import type { WorldState, AsteroidState } from './types';
-import type { Fleet } from './fleet';
+import type { WorldState } from './types';
 import { createShip, createFleet } from './fleet';
 import { SHIP_CLASSES } from '../data/gameData';
 import { updateReputation } from './diplomacy';

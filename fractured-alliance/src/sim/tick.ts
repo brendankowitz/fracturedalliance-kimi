@@ -4,6 +4,7 @@ import { createShip, createFleet } from './fleet';
 import { SHIP_CLASSES, ORES, RACES } from '../data/gameData';
 import { tickMarket, createMarket } from './market';
 import { createRelations, updateReputation } from './diplomacy';
+import { tickAI } from './ai';
 
 const TICKS_PER_DAY = 30;
 
@@ -162,6 +163,18 @@ export function tickWorld(world: WorldState): { world: WorldState; events: SimEv
         text: `${race.id}: Combat penalty. Reputation -3.`,
       });
     }
+  }
+
+  // AI tick
+  const aiResult = tickAI(nextWorldState);
+  nextWorldState = aiResult.world;
+  for (const msg of aiResult.events) {
+    newEvents.push({
+      id: Date.now() + Math.random(),
+      t: formatTick(nextTick),
+      kind: 'warn',
+      text: msg,
+    });
   }
 
   const nextWorld: WorldState = {
