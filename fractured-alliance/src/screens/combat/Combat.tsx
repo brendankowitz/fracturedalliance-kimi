@@ -245,8 +245,12 @@ function TacticalViewport({ playerFleets, enemyFleets }: { playerFleets: Fleet[]
           <div className="panel" style={{ background: 'var(--bg-raised)' }}>
             <div style={{ padding: 10 }}>
               <div className="t-meta">PREDICTED OUTCOME</div>
-              <div className="t-data" style={{ fontSize: 20, color: 'var(--ally)' }}>WIN 78%</div>
-              <div className="t-meta" style={{ color: 'var(--fg-60)' }}>est. 2 more hulls lost</div>
+              <div className="t-data" style={{ fontSize: 20, color: 'var(--ally)' }}>
+                {playerTotal + enemyTotal > 0 ? `WIN ${Math.round((playerAlive / (playerAlive + enemyAlive || 1)) * 100)}%` : '—'}
+              </div>
+              <div className="t-meta" style={{ color: 'var(--fg-60)' }}>
+                {playerTotal + enemyTotal > 0 ? `est. ${Math.max(0, enemyAlive - playerAlive)} more hulls lost` : 'no combat data'}
+              </div>
             </div>
           </div>
           <div className="panel" style={{ background: 'var(--bg-raised)' }}>

@@ -1,5 +1,5 @@
 export function MissileGlyph({ kind, size = 24 }: { kind: string; size?: number }) {
-  const props = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.4, xmlns: 'http://www.w3.org/2000/svg' };
+  const props = { width: size, height: size, viewBox: '0 0 24 30', fill: 'none', stroke: 'currentColor', strokeWidth: 1.4, xmlns: 'http://www.w3.org/2000/svg' };
   switch (kind) {
     case 'basic': return (
       <svg {...props}>

@@ -47,7 +47,7 @@ export function BlueprintSchematic({ bpId, width = 280, height = 200 }: { bpId: 
   for (let i = 0; i < 14; i++) ticks.push(i * 20);
 
   return (
-    <svg width="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet"
+    <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet"
          style={{ display: 'block', color: 'var(--warn)' }}
          xmlns="http://www.w3.org/2000/svg">
       <defs>

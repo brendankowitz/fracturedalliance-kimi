@@ -1,5 +1,5 @@
 export function ShipGlyph({ kind, size = 24 }: { kind: string; size?: number }) {
-  const props = { width: size, height: size, viewBox: '0 0 32 32', fill: 'currentColor', stroke: 'currentColor', strokeWidth: 0.6, strokeLinejoin: 'miter' as const, xmlns: 'http://www.w3.org/2000/svg' };
+  const props = { width: size, height: size, viewBox: '0 0 32 36', fill: 'currentColor', stroke: 'currentColor', strokeWidth: 0.6, strokeLinejoin: 'miter' as const, xmlns: 'http://www.w3.org/2000/svg' };
   switch (kind) {
     case 'scout': return (
       <svg {...props}>
