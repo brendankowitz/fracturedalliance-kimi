@@ -2,54 +2,12 @@ import React from 'react';
 import { ShipGlyph } from '../../assets/ShipGlyph';
 import { MissileGlyph } from '../../assets/MissileGlyph';
 import { BombardmentGlyph } from '../../assets/BombardmentGlyph';
+import { useGameStore } from '../../store/gameStore';
+import type { Fleet, ShipInstance } from '../../sim/fleet';
 
-interface FleetShip {
-  kind: string;
-  name: string;
-  hp: number;
-  count: number;
-}
-
-interface Fleet {
-  id: string;
-  name: string;
-  loc: string;
-  status: string;
-  ships: FleetShip[];
-}
-
-const FLEETS: Fleet[] = [
-  {
-    id: 'strike-1', name: 'Strike-1', loc: 'Forge-3 orbit', status: 'engaging',
-    ships: [
-      { kind: 'battleship', name: 'Asunder', hp: 78, count: 1 },
-      { kind: 'eagle', name: 'Eagle wing-α', hp: 92, count: 4 },
-      { kind: 'assault', name: 'Hammer-pack', hp: 64, count: 6 },
-    ],
-  },
-  {
-    id: 'patrol-2', name: 'Patrol-2', loc: 'Arch-I orbit', status: 'defend',
-    ships: [
-      { kind: 'eagle', name: 'Eagle wing-β', hp: 100, count: 3 },
-      { kind: 'assault', name: 'Picket', hp: 100, count: 4 },
-    ],
-  },
-  {
-    id: 'scout-3', name: 'Scout-3', loc: 'Sector γ-7', status: 'transit',
-    ships: [
-      { kind: 'scout', name: 'Probe-α', hp: 100, count: 3 },
-    ],
-  },
-  {
-    id: 'reserve', name: 'Reserve', loc: 'Forge-3 dock', status: 'docked',
-    ships: [
-      { kind: 'cruiser', name: 'Iron Mandate', hp: 100, count: 1 },
-      { kind: 'destructor', name: 'Vex', hp: 100, count: 2 },
-    ],
-  },
-];
-
-function ShipChip({ ship }: { ship: FleetShip }) {
+function ShipChip({ ship }: { ship: ShipInstance }) {
+  const hpPct = Math.round((ship.hp / ship.maxHp) * 100);
+  const shieldPct = ship.maxShield > 0 ? Math.round((ship.shield / ship.maxShield) * 100) : 0;
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 6,
@@ -57,28 +15,31 @@ function ShipChip({ ship }: { ship: FleetShip }) {
       background: 'var(--bg-input)',
       border: '1px solid var(--line-soft)',
       fontFamily: 'var(--font-mono)', fontSize: 10,
-      color: ship.hp < 50 ? 'var(--crit)' : ship.hp < 80 ? 'var(--warn)' : 'var(--fg-80)',
+      color: hpPct < 50 ? 'var(--crit)' : hpPct < 80 ? 'var(--warn)' : 'var(--fg-80)',
     }}>
       <span style={{ color: 'var(--fg-100)', display: 'inline-flex' }}>
-        <ShipGlyph kind={ship.kind} size={14} />
+        <ShipGlyph kind={ship.classId} size={14} />
       </span>
-      <span>×{ship.count}</span>
-      <span style={{ color: 'var(--fg-40)' }}>·</span>
-      <span>{ship.hp}%</span>
+      <span>{ship.name}</span>
+      {ship.maxShield > 0 && (
+        <span style={{ color: 'var(--signal)' }}>SH {shieldPct}%</span>
+      )}
+      <span style={{ color: 'var(--fg-40)' }}>HP {hpPct}%</span>
     </div>
   );
 }
 
-function FleetRoster({ selected, onSelect }: { selected: string; onSelect: (id: string) => void }) {
+function FleetRoster({ fleets, selected, onSelect }: { fleets: Fleet[]; selected: string; onSelect: (id: string) => void }) {
+  const totalShips = fleets.reduce((sum, f) => sum + f.ships.length, 0);
   return (
     <aside style={{ background: 'var(--bg-base)', borderRight: '1px solid var(--line-soft)', overflowY: 'auto' }}>
       <div style={{ padding: 18, borderBottom: '1px solid var(--line-soft)' }}>
         <div className="t-eyebrow" style={{ color: 'var(--warn)' }}>TACTICAL COMMAND</div>
         <div style={{ fontSize: 20, fontWeight: 500, marginTop: 4, letterSpacing: '-0.02em' }}>Fleet Roster</div>
-        <div className="t-meta" style={{ marginTop: 6 }}>4 fleets · 24 hulls · 1 engagement</div>
+        <div className="t-meta" style={{ marginTop: 6 }}>{fleets.length} fleets · {totalShips} hulls</div>
       </div>
 
-      {FLEETS.map(f => (
+      {fleets.map(f => (
         <button
           key={f.id}
           onClick={() => onSelect(f.id)}
@@ -93,12 +54,12 @@ function FleetRoster({ selected, onSelect }: { selected: string; onSelect: (id: 
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <div style={{ fontSize: 14, color: 'var(--fg-100)' }}>{f.name}</div>
-            <span className={'tag ' + (f.status === 'engaging' ? 'crit' : f.status === 'defend' ? 'signal' : f.status === 'transit' ? 'warn' : '')}
+            <span className={'tag ' + (f.orders === 'attack' ? 'crit' : f.orders === 'patrol' ? 'signal' : f.orders === 'retreat' ? 'warn' : '')}
               style={{ fontSize: 8 }}>
-              {f.status.toUpperCase()}
+              {f.orders.toUpperCase()}
             </span>
           </div>
-          <div className="t-meta" style={{ marginTop: 4 }}>{f.loc}</div>
+          <div className="t-meta" style={{ marginTop: 4 }}>{f.ownerId}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
             {f.ships.map((s, i) => (
               <ShipChip key={i} ship={s} />
@@ -110,7 +71,14 @@ function FleetRoster({ selected, onSelect }: { selected: string; onSelect: (id: 
   );
 }
 
-function TacticalViewport() {
+function TacticalViewport({ playerFleets, enemyFleets }: { playerFleets: Fleet[]; enemyFleets: Fleet[] }) {
+  const playerShips = playerFleets.flatMap(f => f.ships);
+  const enemyShips = enemyFleets.flatMap(f => f.ships);
+  const playerAlive = playerShips.filter(s => s.status !== 'destroyed').length;
+  const enemyAlive = enemyShips.filter(s => s.status !== 'destroyed').length;
+  const playerTotal = playerShips.length;
+  const enemyTotal = enemyShips.length;
+
   return (
     <section style={{ position: 'relative', overflow: 'hidden', background: 'oklch(0.10 0.014 240)' }}>
       {/* Top status bar */}
@@ -126,11 +94,11 @@ function TacticalViewport() {
           </div>
           <div>
             <div className="t-meta">our losses</div>
-            <div className="t-data" style={{ fontSize: 16, color: 'var(--crit)' }}>1</div>
+            <div className="t-data" style={{ fontSize: 16, color: 'var(--crit)' }}>{playerTotal - playerAlive}</div>
           </div>
           <div>
             <div className="t-meta">enemy losses</div>
-            <div className="t-data" style={{ fontSize: 16, color: 'var(--ally)' }}>4</div>
+            <div className="t-data" style={{ fontSize: 16, color: 'var(--ally)' }}>{enemyTotal - enemyAlive}</div>
           </div>
         </div>
       </div>
@@ -258,20 +226,20 @@ function TacticalViewport() {
             <div style={{ padding: 10 }}>
               <div className="t-meta">OUR FLEET</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                <div className="t-data" style={{ fontSize: 20, color: 'var(--warn)' }}>10</div>
-                <div className="t-meta">of 11 hulls</div>
+                <div className="t-data" style={{ fontSize: 20, color: 'var(--warn)' }}>{playerAlive}</div>
+                <div className="t-meta">of {playerTotal} hulls</div>
               </div>
-              <div className="meter warn" style={{ marginTop: 6 }}><div style={{ width: '91%' }} /></div>
+              <div className="meter warn" style={{ marginTop: 6 }}><div style={{ width: `${playerTotal > 0 ? Math.round((playerAlive / playerTotal) * 100) : 0}%` }} /></div>
             </div>
           </div>
           <div className="panel" style={{ background: 'var(--bg-raised)' }}>
             <div style={{ padding: 10 }}>
               <div className="t-meta">ENEMY FLEET</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                <div className="t-data" style={{ fontSize: 20, color: 'var(--crit)' }}>5</div>
-                <div className="t-meta">of 9 hulls</div>
+                <div className="t-data" style={{ fontSize: 20, color: 'var(--crit)' }}>{enemyAlive}</div>
+                <div className="t-meta">of {enemyTotal} hulls</div>
               </div>
-              <div className="meter crit" style={{ marginTop: 6 }}><div style={{ width: '55%' }} /></div>
+              <div className="meter crit" style={{ marginTop: 6 }}><div style={{ width: `${enemyTotal > 0 ? Math.round((enemyAlive / enemyTotal) * 100) : 0}%` }} /></div>
             </div>
           </div>
           <div className="panel" style={{ background: 'var(--bg-raised)' }}>
@@ -294,7 +262,7 @@ function TacticalViewport() {
   );
 }
 
-function OrderPanel() {
+function OrderPanel({ selectedFleetId }: { selectedFleetId: string }) {
   const orders = [
     { id: 'engage', label: 'Engage at will', desc: 'Pick best target per ship', active: true },
     { id: 'focus', label: 'Focus fire', desc: 'All ships → flagged target' },
@@ -313,7 +281,7 @@ function OrderPanel() {
   return (
     <aside style={{ background: 'var(--bg-base)', borderLeft: '1px solid var(--line-soft)', overflowY: 'auto' }}>
       <div style={{ padding: 18, borderBottom: '1px solid var(--line-soft)' }}>
-        <div className="t-eyebrow">ORDERS · STRIKE-1</div>
+        <div className="t-eyebrow">ORDERS · {selectedFleetId || '—'}</div>
         <div style={{ fontSize: 16, fontWeight: 500, marginTop: 4 }}>Active engagement</div>
       </div>
 
@@ -414,13 +382,16 @@ function OrderPanel() {
 }
 
 export function Combat() {
-  const [selectedFleet, setSelectedFleet] = React.useState('strike-1');
+  const [selectedFleet, setSelectedFleet] = React.useState('');
+  const fleets = useGameStore((s) => s.asteroids.flatMap((a) => a.fleets));
+  const playerFleets = fleets.filter((f) => f.ownerId === 'helion');
+  const enemyFleets = fleets.filter((f) => f.ownerId !== 'helion');
 
   return (
     <div className="screen screen-enter" style={{ display: 'grid', gridTemplateColumns: '280px 1fr 320px', height: '100%' }}>
-      <FleetRoster selected={selectedFleet} onSelect={setSelectedFleet} />
-      <TacticalViewport />
-      <OrderPanel />
+      <FleetRoster fleets={playerFleets} selected={selectedFleet} onSelect={setSelectedFleet} />
+      <TacticalViewport playerFleets={playerFleets} enemyFleets={enemyFleets} />
+      <OrderPanel selectedFleetId={selectedFleet} />
     </div>
   );
 }
