@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { BUILDINGS, EVENT_FEED } from '../../data/gameData';
+import { BUILDINGS, EVENT_FEED, ASTEROIDS } from '../../data/gameData';
 import { BuildingGlyph } from '../../assets/BuildingGlyph';
+import type { AsteroidState } from '../../sim/types';
 
 const CATS = [
   { id: 'core', label: 'Core' },
@@ -18,8 +19,9 @@ const CATS = [
 export function ColonyView() {
   const selectedBuilding = useGameStore((s) => s.selectedBuilding);
   const setSelectedBuilding = useGameStore((s) => s.setSelectedBuilding);
-  const placed = useGameStore((s) => s.asteroids.find(a => a.id === s.selectedAsteroid)?.placedBuildings ?? {});
-  const buildQueue = useGameStore((s) => s.asteroids.find(a => a.id === s.selectedAsteroid)?.buildQueue ?? []);
+  const asteroid = useGameStore((s) => s.asteroids.find(a => a.id === s.selectedAsteroid));
+  const placed = asteroid?.placedBuildings ?? {};
+  const buildQueue = asteroid?.buildQueue ?? [];
   const [hoverCell, setHoverCell] = useState<string | null>(null);
 
   const sel = BUILDINGS.find((b) => b.id === selectedBuilding) ?? null;
@@ -43,6 +45,7 @@ export function ColonyView() {
         selected={sel}
         hoverCell={hoverCell}
         onHover={setHoverCell}
+        asteroid={asteroid}
       />
       <ColonySidebar buildQueue={buildQueue} />
     </div>
@@ -176,13 +179,26 @@ function ColonyGrid({
   selected,
   hoverCell,
   onHover,
+  asteroid,
 }: {
   placed: Record<string, { kind: string; damaged?: boolean; constructing?: boolean; progress?: number }>;
   selected: (typeof BUILDINGS)[number] | null;
   hoverCell: string | null;
   onHover: (key: string | null) => void;
+  asteroid?: AsteroidState;
 }) {
   const N = 9;
+  const asteroidDef = ASTEROIDS.find((a) => a.id === asteroid?.id);
+  const r = asteroid?.resources;
+  const stats = r ? [
+    { label: 'POPULATION', value: `${Math.floor(r.pop)} / ${r.popCap}`, bar: Math.round((r.pop / Math.max(1, r.popCap)) * 100), color: 'signal' as const },
+    { label: 'HAPPINESS', value: `${Math.floor(r.happiness)}`, bar: r.happiness, color: 'ally' as const },
+    { label: 'POWER', value: `${r.power > 0 ? '+' : ''}${r.power}`, bar: Math.min(100, Math.max(0, 50 + r.power * 3)), color: r.power < 0 ? 'crit' : 'warn' as const },
+    { label: 'FOOD', value: `${r.food > 0 ? '+' : ''}${r.food} / day`, bar: Math.min(100, Math.max(0, 50 + r.food * 5)), color: 'ally' as const },
+    { label: 'WATER', value: `${r.water > 0 ? '+' : ''}${r.water} / day`, bar: Math.min(100, Math.max(0, 50 + r.water * 5)), color: 'signal' as const },
+    { label: 'AIR', value: `${r.air > 0 ? '+' : ''}${r.air} / day`, bar: Math.min(100, Math.max(0, 50 + r.air * 5)), color: 'signal' as const },
+    { label: 'RAD', value: `${r.rad} mSv`, bar: Math.min(100, r.rad * 4), color: 'ally' as const },
+  ] : [];
 
   return (
     <section style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -198,7 +214,7 @@ function ColonyGrid({
         >
           <div>
             <div className="t-eyebrow" style={{ color: 'var(--warn)' }}>
-              COLONY · ARCH-I · L-class · HOME
+              COLONY · {(asteroidDef?.name ?? '—').toUpperCase()} · {asteroidDef?.size ?? '—'}-class · {(asteroidDef?.status ?? '—').toUpperCase()}
             </div>
             <div
               style={{
@@ -208,7 +224,7 @@ function ColonyGrid({
                 marginTop: 4,
               }}
             >
-              Arch-I Operations
+              {asteroidDef?.name ?? 'Unknown'} Operations
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -225,13 +241,9 @@ function ColonyGrid({
             gap: 14,
           }}
         >
-          <ResourceStat label="POPULATION" value="480 / 700" bar={68} color="signal" />
-          <ResourceStat label="HAPPINESS" value="78" bar={78} color="ally" />
-          <ResourceStat label="POWER" value="+12 / 84" bar={86} color="warn" />
-          <ResourceStat label="FOOD" value="+8 / day" bar={92} color="ally" />
-          <ResourceStat label="WATER" value="+12 / day" bar={88} color="signal" />
-          <ResourceStat label="AIR" value="+4 / day" bar={62} color="signal" />
-          <ResourceStat label="RAD" value="8 mSv" bar={8} color="ally" />
+          {stats.map((s) => (
+            <ResourceStat key={s.label} label={s.label} value={s.value} bar={s.bar} color={s.color} />
+          ))}
         </div>
       </div>
 
