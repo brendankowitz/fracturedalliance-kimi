@@ -118,4 +118,23 @@ describe('gameStore', () => {
     const asteroid = useGameStore.getState().asteroids[0];
     expect(asteroid.placedBuildings['2,2']).toEqual({ kind: 'mine2', constructing: true, progress: 0 });
   });
+
+  it('buyOre deducts treasury and adds ore', () => {
+    const { result } = renderHook(() => useGameStore());
+    const initialTreasury = result.current.treasury;
+    act(() => result.current.buyOre('selenium', 1));
+    expect(result.current.treasury).toBeLessThan(initialTreasury);
+    expect(result.current.asteroids[0].resources.ores.selenium).toBeGreaterThan(0);
+  });
+
+  it('sellOre adds treasury and deducts ore', () => {
+    const { result } = renderHook(() => useGameStore());
+    // First buy some ore
+    act(() => result.current.buyOre('selenium', 5));
+    const treasuryAfterBuy = result.current.treasury;
+    // Then sell it
+    act(() => result.current.sellOre('selenium', 3));
+    expect(result.current.treasury).toBeGreaterThan(treasuryAfterBuy);
+    expect(result.current.asteroids[0].resources.ores.selenium).toBe(2);
+  });
 });

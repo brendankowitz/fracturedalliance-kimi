@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import type { ScreenId, GameSettings, SaveSlot } from '../types';
-import type { AsteroidState, SimEvent } from '../sim/types';
-import { tickWorld } from '../sim/tick';
+import type { ScreenId, GameSettings, SaveSlot, OreKind } from '../types';
+import type { AsteroidState, SimEvent, MarketState } from '../sim/types';
+import { tickWorld, createInitialMarket } from '../sim/tick';
+import { buyOre as buyOreSim, sellOre as sellOreSim } from '../sim/market';
 import { loadSettings, persistSettings, loadSaves } from './saveLoad';
 
 interface GameState {
@@ -21,6 +22,7 @@ interface GameState {
   reputation: Record<string, number>;
   federationStanding: number;
   saves: SaveSlot[];
+  market: MarketState;
 
   setScreen: (s: ScreenId) => void;
   setPaused: (p: boolean) => void;
@@ -34,6 +36,8 @@ interface GameState {
   updateReputation: (raceId: string, delta: number) => void;
   addSuspicion: (amount: number) => void;
   loadSave: (slot: number) => void;
+  buyOre: (ore: OreKind, qty: number) => void;
+  sellOre: (ore: OreKind, qty: number) => void;
 }
 
 const DEFAULT_ASTEROIDS: AsteroidState[] = [
@@ -142,6 +146,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   federationStanding: 62,
   saves: loadSaves(),
+  market: createInitialMarket(),
 
   setScreen: (s) => set({ screen: s }),
   setPaused: (p) => set({ paused: p }),
@@ -160,6 +165,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       federationStanding: state.federationStanding,
       events: state.events,
       fleets: [],
+      market: state.market,
     });
 
     set({
@@ -216,6 +222,46 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   loadSave: (_slot) => {
     set({ screen: 'sector', tick: 341 });
+  },
+
+  buyOre: (ore, qty) => {
+    set((state) => {
+      const asteroid = state.asteroids.find((a) => a.id === state.selectedAsteroid);
+      if (!asteroid) return state;
+      const stockpile = asteroid.resources.ores[ore];
+      const result = buyOreSim(state.market, state.treasury, stockpile, ore, qty);
+      if (!result.success) return state;
+      const aIdx = state.asteroids.findIndex((a) => a.id === state.selectedAsteroid);
+      const nextAsteroids = [...state.asteroids];
+      nextAsteroids[aIdx] = {
+        ...nextAsteroids[aIdx],
+        resources: {
+          ...nextAsteroids[aIdx].resources,
+          ores: { ...nextAsteroids[aIdx].resources.ores, [ore]: result.newStockpile },
+        },
+      };
+      return { treasury: result.newTreasury, asteroids: nextAsteroids };
+    });
+  },
+
+  sellOre: (ore, qty) => {
+    set((state) => {
+      const asteroid = state.asteroids.find((a) => a.id === state.selectedAsteroid);
+      if (!asteroid) return state;
+      const stockpile = asteroid.resources.ores[ore];
+      const result = sellOreSim(state.market, state.treasury, stockpile, ore, qty);
+      if (!result.success) return state;
+      const aIdx = state.asteroids.findIndex((a) => a.id === state.selectedAsteroid);
+      const nextAsteroids = [...state.asteroids];
+      nextAsteroids[aIdx] = {
+        ...nextAsteroids[aIdx],
+        resources: {
+          ...nextAsteroids[aIdx].resources,
+          ores: { ...nextAsteroids[aIdx].resources.ores, [ore]: result.newStockpile },
+        },
+      };
+      return { treasury: result.newTreasury, asteroids: nextAsteroids };
+    });
   },
 }));
 

@@ -1,5 +1,6 @@
 import type { OreKind } from '../types';
 import type { Fleet } from './fleet';
+import type { MarketState } from './market';
 
 export interface BuildingEffect {
   pwr: number;
@@ -57,4 +58,5 @@ export interface WorldState {
   federationStanding: number;
   events: SimEvent[];
   fleets: Fleet[];
+  market: MarketState;
 }

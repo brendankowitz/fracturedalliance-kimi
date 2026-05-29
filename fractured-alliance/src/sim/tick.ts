@@ -1,7 +1,8 @@
 import type { AsteroidState, SimEvent, WorldState } from './types';
 import { getBuildingEffect } from './buildingEffects';
 import { createShip, createFleet } from './fleet';
-import { SHIP_CLASSES } from '../data/gameData';
+import { SHIP_CLASSES, ORES } from '../data/gameData';
+import { tickMarket, createMarket } from './market';
 
 const TICKS_PER_DAY = 30;
 
@@ -90,11 +91,18 @@ export function tickAsteroid(state: AsteroidState, _tick: number): AsteroidState
   return next;
 }
 
+export function createInitialMarket() {
+  return createMarket(
+    Object.fromEntries(ORES.map((o) => [o.id, o.price])) as Record<import('../types').OreKind, number>
+  );
+}
+
 export function tickWorld(world: WorldState): { world: WorldState; events: SimEvent[] } {
   const nextTick = world.tick + 1;
   const newEvents: SimEvent[] = [];
 
   const nextAsteroids = world.asteroids.map(a => tickAsteroid(a, nextTick));
+  const nextMarket = tickMarket(world.market, nextTick);
 
   // Generate events based on state changes
   for (const asteroid of nextAsteroids) {
@@ -120,6 +128,7 @@ export function tickWorld(world: WorldState): { world: WorldState; events: SimEv
     ...world,
     tick: nextTick,
     asteroids: nextAsteroids,
+    market: nextMarket,
     events: [...newEvents, ...world.events].slice(0, 50),
   };
 
