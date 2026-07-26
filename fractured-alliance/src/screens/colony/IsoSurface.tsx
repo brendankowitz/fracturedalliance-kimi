@@ -9,6 +9,7 @@ import {
   mulberry32,
   seedFromId,
 } from './isoMath';
+import { drawRock, drawStarfield } from '../../render/rock';
 
 export interface PlacedCell {
   kind: string;
@@ -40,15 +41,8 @@ const T = {
   signal: '#5fa8d3',
 };
 
-/* Rock palette — tan/grey 1996-style asteroid. */
-const ROCK = {
-  light: '#96855f',
-  mid: '#7b6d4f',
-  dark: '#4c4332',
-  rim: '#2c2718',
-  crater: 'rgba(28, 24, 15, 0.55)',
-  craterLit: 'rgba(216, 196, 152, 0.22)',
-};
+/* Rock palette + rock/starfield drawing live in render/rock.ts
+   (shared with the sector belt map). */
 
 export function IsoSurface({
   asteroidId,
@@ -239,14 +233,15 @@ export function IsoSurface({
 
     /* Starfield (seeded, world space) */
     const starRand = mulberry32(seedFromId(asteroidId) ^ 0x9e3779b9);
-    for (let i = 0; i < 170; i++) {
-      const sx = bounds.minX - 120 + starRand() * (bounds.maxX - bounds.minX + 240);
-      const sy = bounds.minY - 120 + starRand() * (bounds.maxY - bounds.minY + 240);
-      const a = 0.25 + starRand() * 0.65;
-      const s = starRand() < 0.12 ? 1.6 : 0.9;
-      ctx.fillStyle = `rgba(214, 226, 245, ${a})`;
-      ctx.fillRect(sx, sy, s, s);
-    }
+    drawStarfield(
+      ctx,
+      starRand,
+      bounds.minX - 120,
+      bounds.minY - 120,
+      bounds.maxX + 120,
+      bounds.maxY + 120,
+      170
+    );
 
     drawRock(ctx, asteroidId, n, bounds);
     drawGrid(ctx, n, placed, hoverCell, inspectedCell);
@@ -282,91 +277,6 @@ export function IsoSurface({
       />
     </div>
   );
-}
-
-/* ============================================================
-   Rock
-   ============================================================ */
-function drawRock(
-  ctx: CanvasRenderingContext2D,
-  asteroidId: string,
-  n: number,
-  bounds: { minX: number; maxX: number; minY: number; maxY: number }
-) {
-  const rand = mulberry32(seedFromId(asteroidId));
-  const cx = 0;
-  const cy = n * 16;
-  const rx = n * 32 + 34;
-  const ry = n * 16 + 30;
-
-  /* Lumpy silhouette: noisy radial blob, lightly smoothed. */
-  const steps = 48;
-  const noise: number[] = [];
-  for (let i = 0; i < steps; i++) noise.push(0.84 + rand() * 0.3);
-  for (let i = 0; i < steps; i++) {
-    noise[i] = (noise[i] + noise[(i + 1) % steps] + noise[(i + steps - 1) % steps]) / 3;
-  }
-  const pts: number[][] = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = (i / steps) * Math.PI * 2;
-    const k = noise[i % steps];
-    pts.push([cx + Math.cos(t) * rx * k, cy + Math.sin(t) * ry * k]);
-  }
-
-  const blob = new Path2D();
-  blob.moveTo(pts[0][0], pts[0][1]);
-  for (let i = 1; i < pts.length; i++) blob.lineTo(pts[i][0], pts[i][1]);
-  blob.closePath();
-
-  /* Base rock gradient */
-  const grad = ctx.createLinearGradient(cx - rx * 0.4, cy - ry, cx + rx * 0.5, cy + ry);
-  grad.addColorStop(0, ROCK.light);
-  grad.addColorStop(0.55, ROCK.mid);
-  grad.addColorStop(1, ROCK.dark);
-  ctx.fillStyle = grad;
-  ctx.fill(blob);
-  ctx.strokeStyle = ROCK.rim;
-  ctx.lineWidth = 2;
-  ctx.stroke(blob);
-
-  ctx.save();
-  ctx.clip(blob);
-
-  /* Top-left light / bottom-right shade */
-  const light = ctx.createRadialGradient(cx - rx * 0.45, cy - ry * 0.55, 10, cx, cy, rx * 1.4);
-  light.addColorStop(0, 'rgba(255, 238, 200, 0.14)');
-  light.addColorStop(0.6, 'rgba(0, 0, 0, 0)');
-  light.addColorStop(1, 'rgba(0, 0, 0, 0.32)');
-  ctx.fillStyle = light;
-  ctx.fillRect(bounds.minX, bounds.minY, bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
-
-  /* Craters */
-  const craters = 7 + Math.floor(rand() * 5) + n;
-  for (let i = 0; i < craters; i++) {
-    const px = cx + (rand() * 2 - 1) * rx * 0.78;
-    const py = cy + (rand() * 2 - 1) * ry * 0.72;
-    const inside = ((px - cx) / rx) ** 2 + ((py - cy) / ry) ** 2 < 0.8;
-    if (!inside) continue;
-    const r = 3.5 + rand() * 9;
-    ctx.beginPath();
-    ctx.ellipse(px, py, r, r * 0.48, 0, 0, Math.PI * 2);
-    ctx.fillStyle = ROCK.crater;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(px, py, r, r * 0.48, 0, Math.PI * 1.05, Math.PI * 1.75);
-    ctx.strokeStyle = ROCK.craterLit;
-    ctx.lineWidth = 1.1;
-    ctx.stroke();
-  }
-
-  /* Speckle */
-  for (let i = 0; i < 90; i++) {
-    const px = cx + (rand() * 2 - 1) * rx * 0.9;
-    const py = cy + (rand() * 2 - 1) * ry * 0.85;
-    ctx.fillStyle = rand() < 0.5 ? 'rgba(0,0,0,0.10)' : 'rgba(255,240,210,0.08)';
-    ctx.fillRect(px, py, 1.1, 1.1);
-  }
-  ctx.restore();
 }
 
 /* ============================================================
