@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { BUILDINGS } from '../../data/gameData';
 import type { BuildingDef } from '../../types';
+import type { Fleet } from '../../sim/fleet';
+import { fleetBadgeFromFleets } from '../sector/beltBadges';
 import {
   project,
   cellCenter,
@@ -31,19 +33,22 @@ interface View {
    extras (star twinkle, smoke wisps, blinking nav lights). */
 interface AmbientStar { x: number; y: number; size: number; phase: number; speed: number }
 interface AmbientLight { x: number; y: number; phase: number; speed: number; crit: boolean }
+interface AmbientOrbital { x: number; y: number; phase: number; big: boolean; color: string }
 interface AmbientData {
   stars: AmbientStar[];
   lights: AmbientLight[];
   mines: { x: number; y: number }[];
+  orbitals: AmbientOrbital[];
 }
 
-const EMPTY_AMBIENT: AmbientData = { stars: [], lights: [], mines: [] };
+const EMPTY_AMBIENT: AmbientData = { stars: [], lights: [], mines: [], orbitals: [] };
 
 /** Seeded, stable ambient anchors for the current scene. */
 function computeAmbient(
   asteroidId: string,
   placed: Record<string, PlacedCell>,
-  bounds: Rect
+  bounds: Rect,
+  fleets: Fleet[]
 ): AmbientData {
   const rand = mulberry32(seedFromId(asteroidId) ^ 0x51f15e);
   const stars: AmbientStar[] = [];
@@ -79,7 +84,26 @@ function computeAmbient(
       });
     }
   }
-  return { stars, lights, mines };
+  /* Orbital silhouettes for stationed fleets: 1–2 tiny darts in the
+     sky above the rock, tinted by the dominant fleet owner. */
+  const orbitals: AmbientOrbital[] = [];
+  const badge = fleetBadgeFromFleets(fleets);
+  if (badge) {
+    const color = badge.tone === 'warn' ? T.glow : badge.tone === 'crit' ? T.crit : T.signal;
+    const cx = (bounds.minX + bounds.maxX) / 2;
+    const spread = (bounds.maxX - bounds.minX) * 0.16;
+    const count = Math.min(2, badge.hulls);
+    for (let i = 0; i < count; i++) {
+      orbitals.push({
+        x: cx + (rand() * 2 - 1) * spread,
+        y: bounds.minY + 18 + rand() * 16,
+        phase: rand() * Math.PI * 2,
+        big: badge.silhouettes[i] !== 'S',
+        color,
+      });
+    }
+  }
+  return { stars, lights, mines, orbitals };
 }
 
 /** Per-frame draw: blit cached static frame + tiny dynamic layer. */
@@ -129,6 +153,27 @@ function drawAmbientFrame(
     dot(ctx, l.x, l.y, 1.2, l.crit ? T.crit : T.glow);
     ctx.globalAlpha = 1;
   }
+
+  /* Stationed-fleet orbitals: tiny darts with a slow bob + thrust flicker */
+  for (const o of amb.orbitals) {
+    const k = o.big ? 1.35 : 1;
+    const bob = Math.sin(t * 0.7 + o.phase) * 2.4;
+    ctx.save();
+    ctx.translate(o.x, o.y + bob);
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = o.color;
+    ctx.beginPath();
+    ctx.moveTo(4 * k, 0);
+    ctx.lineTo(-3 * k, 2.1 * k);
+    ctx.lineTo(-1.4 * k, 0);
+    ctx.lineTo(-3 * k, -2.1 * k);
+    ctx.closePath();
+    ctx.fill();
+    const fl = 0.35 + 0.55 * Math.abs(Math.sin(t * 5.2 + o.phase));
+    ctx.globalAlpha = fl;
+    ctx.fillRect(-4.6 * k, -0.5, 1.8 * k, 1);
+    ctx.restore();
+  }
 }
 
 /* Building palette — mirrors assets/BuildingTile.tsx tones. */
@@ -155,6 +200,7 @@ export function IsoSurface({
   asteroidId,
   gridSize,
   placed,
+  fleets,
   selected,
   hoverCell,
   inspectedCell,
@@ -164,6 +210,7 @@ export function IsoSurface({
   asteroidId: string;
   gridSize: number;
   placed: Record<string, PlacedCell>;
+  fleets?: Fleet[];
   selected: BuildingDef | null;
   hoverCell: string | null;
   inspectedCell: string | null;
@@ -373,7 +420,7 @@ export function IsoSurface({
     drawCells(sctx, n, placed, hoverCell, inspectedCell, selected, phase);
 
     /* Refresh ambient anchors for the dynamic layer. */
-    ambientRef.current = computeAmbient(asteroidId, placed, bounds);
+    ambientRef.current = computeAmbient(asteroidId, placed, bounds, fleets ?? []);
   });
 
   /* ---- ambient life (rAF, dynamic layer only) ---- */

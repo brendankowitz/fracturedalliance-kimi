@@ -3,6 +3,7 @@ import { useGameStore } from '../../store/gameStore';
 import { RACES, ORES } from '../../data/gameData';
 import { byId } from '../../data/gameData';
 import type { AsteroidState } from '../../sim/types';
+import type { MarketState } from '../../sim/market';
 import type { RaceDef } from '../../types';
 import { BeltCanvas } from './BeltCanvas';
 
@@ -11,6 +12,7 @@ export function SectorMap() {
   const setSelectedAsteroid = useGameStore((s) => s.setSelectedAsteroid);
   const setScreen = useGameStore((s) => s.setScreen);
   const asteroids = useGameStore((s) => s.asteroids);
+  const market = useGameStore((s) => s.market);
 
   const selected = asteroids.find((a) => a.id === selectedId);
   const owner = selected?.ownerId ? byId(RACES, selected.ownerId) : undefined;
@@ -19,6 +21,7 @@ export function SectorMap() {
     <div className="screen screen-enter" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', height: '100%' }}>
       <SectorCanvas
         asteroids={asteroids}
+        market={market}
         selectedId={selectedId}
         onSelect={(id: string) => setSelectedAsteroid(id)}
         onJumpToColony={(id: string) => {
@@ -42,11 +45,13 @@ export function SectorMap() {
 
 function SectorCanvas({
   asteroids,
+  market,
   selectedId,
   onSelect,
   onJumpToColony,
 }: {
   asteroids: AsteroidState[];
+  market: MarketState;
   selectedId: string;
   onSelect: (id: string) => void;
   onJumpToColony: (id: string) => void;
@@ -58,6 +63,7 @@ function SectorCanvas({
       {/* Rendered belt: starfield + rock sprites + ship lanes */}
       <BeltCanvas
         asteroids={asteroids}
+        market={market}
         selectedId={selectedId}
         onSelect={onSelect}
         onJumpToColony={onJumpToColony}

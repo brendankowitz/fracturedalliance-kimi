@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { AsteroidState } from '../../sim/types';
+import type { MarketState } from '../../sim/market';
 import { mulberry32, seedFromId } from '../colony/isoMath';
 import { drawRockSprite, drawStarfield, ROCK, ROCK_GREY } from '../../render/rock';
+import {
+  enginesArmedFor,
+  fleetBadgeFor,
+  merchantDockFor,
+  type SilhouetteSize,
+} from './beltBadges';
 import {
   BELT_BOUNDS,
   clampBeltView,
@@ -56,14 +63,60 @@ const ROUTES_HELION: [number, number, number, number][] = [
 const ROUTE_ALLY: [number, number, number, number] = [26, 38, 60, 48];
 const ROUTE_RAM: [number, number, number, number] = [78, 38, 22, 56];
 
+/* ---- mechanics-visibility glyphs (screen space) ---- */
+
+/* Delta/dart ship silhouette, nose along -y before rotation.
+   Visual language mirrors assets/ShipGlyph.tsx (SVG variant). */
+function drawShipSil(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: SilhouetteSize,
+  rot: number,
+  color: string
+) {
+  const k = size === 'L' ? 3.1 : size === 'M' ? 2.5 : 1.9;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(0, -2.2 * k);
+  ctx.lineTo(1.1 * k, 1.4 * k);
+  ctx.lineTo(0, 0.7 * k);
+  ctx.lineTo(-1.1 * k, 1.4 * k);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+/* Boxy merchant hauler: hull + bridge + cargo ribs + engine flicker. */
+function drawHauler(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, pulse: number) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.92;
+  ctx.fillRect(-6, -3, 12, 6);
+  ctx.fillRect(-3, -5.5, 5, 2.5);
+  ctx.fillRect(-8.5, -2, 2.5, 4);
+  ctx.globalAlpha = 0.55;
+  ctx.fillRect(-1.5, -3, 1, 6);
+  ctx.fillRect(2.5, -3, 1, 6);
+  ctx.globalAlpha = 0.35 + 0.45 * pulse;
+  ctx.fillRect(-10.2, -1, 1.8, 2);
+  ctx.restore();
+}
+
 export function BeltCanvas({
   asteroids,
+  market,
   selectedId,
   onSelect,
   onJumpToColony,
   onZoomChange,
 }: {
   asteroids: AsteroidState[];
+  market: MarketState;
   selectedId: string;
   onSelect: (id: string) => void;
   onJumpToColony: (id: string) => void;
@@ -83,10 +136,10 @@ export function BeltCanvas({
   const zoomReportedRef = useRef(0);
 
   /* Latest props for the rAF draw loop. */
-  const propsRef = useRef({ asteroids, selectedId, onSelect, onJumpToColony, onZoomChange });
+  const propsRef = useRef({ asteroids, market, selectedId, onSelect, onJumpToColony, onZoomChange });
   useEffect(() => {
-    propsRef.current = { asteroids, selectedId, onSelect, onJumpToColony, onZoomChange };
-  }, [asteroids, selectedId, onSelect, onJumpToColony, onZoomChange]);
+    propsRef.current = { asteroids, market, selectedId, onSelect, onJumpToColony, onZoomChange };
+  }, [asteroids, market, selectedId, onSelect, onJumpToColony, onZoomChange]);
 
   useEffect(() => {
     viewRef.current = view;
@@ -215,8 +268,13 @@ export function BeltCanvas({
       const { w, h, dpr } = dimsRef.current;
       if (w < 10 || h < 10) return;
       const v = viewRef.current;
-      const { selectedId: selId } = propsRef.current;
+      const { selectedId: selId, market } = propsRef.current;
       const rocks = rocksRef.current;
+      /* Merchant dock: real market state only; null while inactive. */
+      const dock = merchantDockFor(
+        rocks.map((r) => r.a),
+        market
+      );
 
       if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
         canvas.width = Math.round(w * dpr);
@@ -385,6 +443,89 @@ export function BeltCanvas({
           ctx.lineWidth = 0.8;
           ctx.stroke();
           ctx.restore();
+        }
+
+        /* Engines-armed badge (built, non-constructing engines only). */
+        if (enginesArmedFor(rock.a) > 0) {
+          ctx.font = '8px "JetBrains Mono", monospace';
+          ctx.textAlign = 'center';
+          ctx.shadowColor = 'rgba(5, 7, 12, 0.9)';
+          ctx.shadowBlur = 3;
+          ctx.fillStyle = colors.warn;
+          ctx.fillText('◀◀', s.x - sr * 0.72 - 5, s.y - sr * 0.72 + 3);
+          ctx.shadowBlur = 0;
+        }
+
+        /* Fleet presence: silhouettes on a tight arc above the rock
+           plus an owner-tinted hull-count chip. */
+        const badge = fleetBadgeFor(rock.a);
+        if (badge) {
+          const col = colors[badge.tone];
+          const ox = s.x;
+          const oy = s.y - sr - 20;
+          const orbitR = Math.min(15, sr + 7);
+          /* Seeded patrol drift — pure oscillation, no state. */
+          const phase = mulberry32(seedFromId(`${rock.id}:fleet`))() * Math.PI * 2;
+          const drift = badge.patrolling ? Math.sin(t * 0.7 + phase) * 0.5 : 0;
+          const nSil = badge.silhouettes.length;
+          badge.silhouettes.forEach((sz, i) => {
+            const ang = -Math.PI / 2 + (i - (nSil - 1) / 2) * 0.62 + drift;
+            drawShipSil(
+              ctx,
+              ox + Math.cos(ang) * orbitR,
+              oy + Math.sin(ang) * orbitR * 0.45,
+              sz,
+              ang + Math.PI / 2,
+              col
+            );
+          });
+          const chip = `⬡ ${badge.hulls}`;
+          const chipY = oy - orbitR * 0.45 - 7;
+          ctx.font = '8px "JetBrains Mono", monospace';
+          ctx.textAlign = 'center';
+          ctx.shadowColor = 'rgba(5, 7, 12, 0.9)';
+          ctx.shadowBlur = 3;
+          ctx.fillStyle = col;
+          ctx.fillText(chip, ox, chipY);
+          ctx.shadowBlur = 0;
+          if (badge.attacking) {
+            const cw = ctx.measureText(chip).width + 4;
+            ctx.save();
+            ctx.globalAlpha = pulseFast;
+            ctx.strokeStyle = colors.crit;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(ox - cw / 2, chipY + 3.5);
+            ctx.lineTo(ox + cw / 2, chipY + 3.5);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        /* Merchant hauler docked at the home rock (real market state). */
+        if (dock && dock.asteroidId === rock.id) {
+          const hx = s.x - sr - 14;
+          const hy = s.y - sr - 14;
+          ctx.save();
+          ctx.globalAlpha = 0.5;
+          ctx.strokeStyle = colors.ally;
+          ctx.lineWidth = 0.6;
+          ctx.setLineDash([1.5, 1.5]);
+          ctx.beginPath();
+          ctx.moveTo(s.x - sr * 0.72, s.y - sr * 0.72);
+          ctx.lineTo(hx + 5, hy + 2);
+          ctx.stroke();
+          ctx.restore();
+          drawHauler(ctx, hx, hy, colors.ally, pulseSlow);
+          const tag =
+            dock.stockCount > 0 ? `MERCHANT DOCKED · ${dock.stockCount} LOTS` : 'MERCHANT DOCKED';
+          ctx.font = '8px "JetBrains Mono", monospace';
+          ctx.textAlign = 'center';
+          ctx.shadowColor = 'rgba(5, 7, 12, 0.9)';
+          ctx.shadowBlur = 3;
+          ctx.fillStyle = colors.ally;
+          ctx.fillText(tag, hx, hy - 12);
+          ctx.shadowBlur = 0;
         }
 
         /* Name + size class under the rock. */

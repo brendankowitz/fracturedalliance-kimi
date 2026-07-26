@@ -311,6 +311,7 @@ function ColonyGrid({
           asteroidId={asteroid?.id ?? 'unknown'}
           gridSize={N}
           placed={placed}
+          fleets={asteroid?.fleets ?? []}
           selected={selected}
           hoverCell={hoverCell}
           inspectedCell={inspectedCell}
