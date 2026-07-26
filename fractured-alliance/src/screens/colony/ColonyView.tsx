@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { BUILDINGS, EVENT_FEED, ASTEROIDS } from '../../data/gameData';
 import { BuildingGlyph } from '../../assets/BuildingGlyph';
+import { IsoSurface } from './IsoSurface';
+import { gridSizeFor, isBuildable } from './isoMath';
 import type { AsteroidState } from '../../sim/types';
 
 const CATS = [
@@ -27,7 +29,9 @@ export function ColonyView() {
   );
   const placed = asteroid?.placedBuildings ?? {};
   const buildQueue = asteroid?.buildQueue ?? [];
+  const placeBuilding = useGameStore((s) => s.placeBuilding);
   const [hoverCell, setHoverCell] = useState<string | null>(null);
+  const [inspectedCell, setInspectedCell] = useState<string | null>(null);
 
   if (!asteroid) {
     return (
@@ -38,6 +42,22 @@ export function ColonyView() {
   }
 
   const sel = BUILDINGS.find((b) => b.id === selectedBuilding) ?? null;
+  const asteroidDef = ASTEROIDS.find((a) => a.id === asteroid.id);
+  const gridN = gridSizeFor(asteroidDef?.size ?? asteroid.size);
+
+  const handleCellClick = (key: string) => {
+    if (placed[key]) {
+      // Occupied cell: inspect (legacy grid had no click handler; the
+      // inspect ring + overlay readout is the new select behavior).
+      setInspectedCell(key);
+      return;
+    }
+    if (!sel) return;
+    const [x, y] = key.split(',').map(Number);
+    if (!isBuildable(x, y, gridN)) return;
+    setInspectedCell(null);
+    placeBuilding(key, sel.id);
+  };
 
   return (
     <div
@@ -59,6 +79,9 @@ export function ColonyView() {
         hoverCell={hoverCell}
         onHover={setHoverCell}
         asteroid={asteroid}
+        gridN={gridN}
+        inspectedCell={inspectedCell}
+        onCellClick={handleCellClick}
       />
       <ColonySidebar buildQueue={buildQueue} />
     </div>
@@ -193,15 +216,24 @@ function ColonyGrid({
   hoverCell,
   onHover,
   asteroid,
+  gridN,
+  inspectedCell,
+  onCellClick,
 }: {
   placed: Record<string, { kind: string; damaged?: boolean; constructing?: boolean; progress?: number }>;
   selected: (typeof BUILDINGS)[number] | null;
   hoverCell: string | null;
   onHover: (key: string | null) => void;
   asteroid?: AsteroidState;
+  gridN: number;
+  inspectedCell: string | null;
+  onCellClick: (key: string) => void;
 }) {
-  const N = 9;
+  const N = gridN;
   const asteroidDef = ASTEROIDS.find((a) => a.id === asteroid?.id);
+  const inspectedDef = inspectedCell && placed[inspectedCell]
+    ? BUILDINGS.find((b) => b.id === placed[inspectedCell].kind)
+    : null;
   const r = asteroid?.resources;
   const stats = r ? [
     { label: 'POPULATION', value: `${Math.floor(r.pop)} / ${r.popCap}`, bar: Math.round((r.pop / Math.max(1, r.popCap)) * 100), color: 'signal' as const },
@@ -260,119 +292,25 @@ function ColonyGrid({
         </div>
       </div>
 
-      {/* Build grid area */}
+      {/* Build grid area — isometric asteroid surface */}
       <div
         style={{
           flex: 1,
           position: 'relative',
           overflow: 'hidden',
-          background:
-            'radial-gradient(ellipse at center, oklch(0.20 0.018 240) 0%, var(--bg-void) 100%)',
-          display: 'grid',
-          placeItems: 'center',
+          background: 'var(--bg-void)',
         }}
       >
-        {/* Ore deposit faint backdrop */}
-        <svg
-          width={320}
-          height={320}
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            opacity: 0.35,
-            pointerEvents: 'none',
-          }}
-        >
-          <circle
-            cx={160}
-            cy={160}
-            r={140}
-            fill="none"
-            stroke="oklch(0.30 0.06 240)"
-            strokeWidth={0.5}
-          />
-          <circle
-            cx={160}
-            cy={160}
-            r={100}
-            fill="none"
-            stroke="oklch(0.30 0.06 240)"
-            strokeWidth={0.5}
-          />
-          <circle
-            cx={160}
-            cy={160}
-            r={60}
-            fill="none"
-            stroke="oklch(0.40 0.06 60)"
-            strokeWidth={0.5}
-          />
-          <text
-            x={160}
-            y={306}
-            textAnchor="middle"
-            fontFamily="JetBrains Mono"
-            fontSize={9}
-            fill="oklch(0.40 0.012 240)"
-          >
-            SURFACE
-          </text>
-          <text
-            x={160}
-            y={266}
-            textAnchor="middle"
-            fontFamily="JetBrains Mono"
-            fontSize={9}
-            fill="oklch(0.40 0.012 240)"
-          >
-            DEEP
-          </text>
-          <text
-            x={160}
-            y={226}
-            textAnchor="middle"
-            fontFamily="JetBrains Mono"
-            fontSize={9}
-            fill="oklch(0.50 0.10 60)"
-          >
-            SEISMIC
-          </text>
-        </svg>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${N}, 56px)`,
-            gridTemplateRows: `repeat(${N}, 56px)`,
-            gap: 2,
-            position: 'relative',
-          }}
-        >
-          {Array.from({ length: N * N }, (_, i) => {
-            const x = i % N;
-            const y = Math.floor(i / N);
-            const key = `${x},${y}`;
-            const cell = placed[key];
-            const dist = Math.abs(x - 4) + Math.abs(y - 4);
-            const onRim = dist > 5;
-            const isHover = hoverCell === key;
-            return (
-              <Cell
-                key={key}
-                x={x}
-                y={y}
-                cell={cell}
-                onRim={onRim}
-                isHover={isHover}
-                selected={selected}
-                onEnter={() => onHover(key)}
-                onLeave={() => onHover(null)}
-              />
-            );
-          })}
-        </div>
+        <IsoSurface
+          asteroidId={asteroid?.id ?? 'unknown'}
+          gridSize={N}
+          placed={placed}
+          selected={selected}
+          hoverCell={hoverCell}
+          inspectedCell={inspectedCell}
+          onHoverCell={onHover}
+          onCellClick={onCellClick}
+        />
 
         {/* Coord overlay */}
         <div
@@ -383,9 +321,11 @@ function ColonyGrid({
             fontFamily: 'var(--font-mono)',
             fontSize: 10,
             color: 'var(--fg-40)',
+            pointerEvents: 'none',
           }}
         >
-          GRID 9×9 · ORIGIN [0,0] · LAYERED EXTRACTION ENABLED
+          ISO GRID {N}×{N} · {hoverCell ? `CELL [${hoverCell}]` : 'WHEEL ZOOM · DRAG PAN'}
+          {inspectedDef ? ` · INSPECT: ${inspectedDef.name.toUpperCase()} [${inspectedCell}]` : ''}
         </div>
         <div
           style={{
@@ -406,168 +346,6 @@ function ColonyGrid({
         </div>
       </div>
     </section>
-  );
-}
-
-/* ============================================================
-   Cell
-   ============================================================ */
-function Cell({
-  x,
-  y,
-  cell,
-  onRim,
-  isHover,
-  selected,
-  onEnter,
-  onLeave,
-}: {
-  x: number;
-  y: number;
-  cell?: { kind: string; damaged?: boolean; constructing?: boolean; progress?: number };
-  onRim: boolean;
-  isHover: boolean;
-  selected: (typeof BUILDINGS)[number] | null;
-  onEnter: () => void;
-  onLeave: () => void;
-}) {
-  const def = cell ? BUILDINGS.find((b) => b.id === cell.kind) : null;
-  const canPlace = !cell && !onRim;
-
-  let bg: string = 'transparent';
-  let border: string = onRim ? 'transparent' : '1px solid oklch(0.26 0.014 240)';
-  let color: string = 'var(--fg-60)';
-  let glow: string = 'none';
-
-  if (cell) {
-    bg = cell.damaged ? 'var(--crit-bg)' : 'var(--bg-elev)';
-    border = cell.damaged
-      ? '1px solid var(--crit-dim)'
-      : cell.constructing
-      ? '1px dashed var(--warn-dim)'
-      : '1px solid var(--line)';
-    color = cell.constructing ? 'var(--warn)' : 'var(--fg-100)';
-  }
-  if (isHover && canPlace) {
-    bg = 'var(--warn-bg)';
-    border = '1px solid var(--warn)';
-    glow = '0 0 8px var(--warn-dim)';
-  }
-  if (isHover && cell) {
-    border = '1px solid var(--signal)';
-  }
-
-  if (onRim) return <div style={{ background: 'transparent' }} />;
-
-  return (
-    <button
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
-      style={{
-        background: bg,
-        border,
-        cursor: cell ? 'pointer' : canPlace ? 'crosshair' : 'not-allowed',
-        padding: 0,
-        position: 'relative',
-        boxShadow: glow,
-        transition: 'all 80ms',
-      }}
-    >
-      {def && (
-        <>
-          <div
-            style={{
-              color,
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <BuildingGlyph id={def.id} size={32} />
-          </div>
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 2,
-              left: 3,
-              fontFamily: 'var(--font-mono)',
-              fontSize: 8,
-              color: 'var(--fg-40)',
-              letterSpacing: '0.06em',
-            }}
-          >
-            {def.id.slice(0, 3).toUpperCase()}
-          </div>
-          {cell?.constructing && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 3,
-                background: 'var(--bg-input)',
-              }}
-            >
-              <div
-                style={{
-                  width: `${(cell.progress ?? 0) * 100}%`,
-                  height: '100%',
-                  background: 'var(--warn)',
-                }}
-              />
-            </div>
-          )}
-          {cell?.damaged && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 2,
-                right: 3,
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9,
-                color: 'var(--crit)',
-              }}
-            >
-              !
-            </div>
-          )}
-        </>
-      )}
-      {canPlace && isHover && selected && (
-        <div
-          style={{
-            color: 'var(--warn)',
-            opacity: 0.6,
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          <BuildingGlyph id={selected.id} size={32} />
-        </div>
-      )}
-      {!cell && !onRim && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 3,
-            left: 4,
-            fontFamily: 'var(--font-mono)',
-            fontSize: 7,
-            color: 'var(--fg-20)',
-          }}
-        >
-          {x}
-          {y}
-        </div>
-      )}
-    </button>
   );
 }
 
