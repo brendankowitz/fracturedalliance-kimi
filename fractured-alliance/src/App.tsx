@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { useGameStore } from './store/gameStore'
+import type { ScreenId } from './types'
 import { Taskbar } from './components/Taskbar'
+import { IconRail } from './components/IconRail'
 import { StatusBar } from './components/StatusBar'
 import { TweaksPanel } from './components/TweaksPanel'
 import { MainMenu } from './screens/menu/MainMenu'
@@ -12,8 +14,30 @@ import { Trade } from './screens/trade/Trade'
 import { Combat } from './screens/combat/Combat'
 import { Espionage } from './screens/espionage/Espionage'
 
+const FKEY_SCREENS: Record<string, ScreenId> = {
+  F1: 'menu',
+  F2: 'sector',
+  F3: 'colony',
+  F4: 'scitek',
+  F5: 'trade',
+  F6: 'diplomacy',
+  F7: 'combat',
+  F8: 'espionage',
+}
+
 function App() {
-  const { screen, settings, setScreen, setPaused, setSpeed, paused, speed, setSettings, tick } = useGameStore()
+  const { screen, settings, setScreen, setPaused, setSpeed, paused, speed, setSettings } = useGameStore()
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const target = FKEY_SCREENS[e.key]
+      if (!target) return
+      e.preventDefault()
+      useGameStore.getState().setScreen(target)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   useEffect(() => {
     const root = document.documentElement
@@ -72,30 +96,19 @@ function App() {
     }
   })()
 
-  const timeStr = `${Math.floor(tick / 30)}.${(tick % 30).toString().padStart(2, '0')}`
-  const tickStr = tick.toString().padStart(4, '0')
-
   return (
     <div className="stage">
       <div className={`canvas ${settings.scanlines ? 'scanlines' : ''}`} style={{ '--vignette-on': settings.vignette ? 1 : 0 } as React.CSSProperties}>
-        {screen !== 'menu' && (
-          <Taskbar
-            screen={screen}
-            setScreen={setScreen}
-            treasury={142840}
-            time={timeStr}
-            tick={tickStr}
-            alerts={3}
-          />
-        )}
+        {screen !== 'menu' && <Taskbar />}
         <div style={{
           gridRow: screen === 'menu' ? '1 / -1' : 'auto',
-          gridColumn: '1 / -1',
+          gridColumn: screen === 'menu' ? '1 / -1' : '1 / 2',
           overflow: 'hidden',
           position: 'relative',
         }} key={screen}>
           {screenContent}
         </div>
+        {screen !== 'menu' && <IconRail />}
         {screen !== 'menu' && (
           <StatusBar
             message={`Viewing ${screen.toUpperCase()} · select an asteroid to inspect`}

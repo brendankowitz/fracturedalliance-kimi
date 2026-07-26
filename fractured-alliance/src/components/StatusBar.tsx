@@ -1,3 +1,6 @@
+import { useGameStore } from '../store/gameStore';
+import { simDay } from '../utils/simDate';
+
 export function StatusBar({ message, speed, setSpeed, paused, setPaused }: {
   message: string;
   speed: number;
@@ -5,6 +8,10 @@ export function StatusBar({ message, speed, setSpeed, paused, setPaused }: {
   paused: boolean;
   setPaused: (p: boolean) => void;
 }) {
+  const tick = useGameStore((s) => s.tick);
+  const savesUsed = useGameStore((s) => s.saves.filter((sv) => sv.day !== null && sv.day !== undefined).length);
+  const savesTotal = useGameStore((s) => s.saves.length);
+
   return (
     <footer className="statusbar">
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -31,9 +38,9 @@ export function StatusBar({ message, speed, setSpeed, paused, setPaused }: {
         ))}
       </div>
       <div className="end">
-        <span>SEED 0x8FA12C</span>
-        <span>MATCH 03:42:18</span>
-        <span>SAVE — AUTO</span>
+        <span>DAY {String(simDay(tick)).padStart(4, '0')}</span>
+        <span>SPEED {speed}×</span>
+        <span>SAVES {String(savesUsed).padStart(2, '0')}/{String(savesTotal).padStart(2, '0')}</span>
         <span style={{ color: 'var(--ally)' }}>● SYNCED</span>
       </div>
     </footer>

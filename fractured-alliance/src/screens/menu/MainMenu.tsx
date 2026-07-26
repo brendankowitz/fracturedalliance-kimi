@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ACHIEVEMENTS } from '../../sim/achievements';
+import { simDate } from '../../utils/simDate';
 
 interface Scenario {
   id: string;
@@ -65,7 +66,7 @@ export function MainMenu() {
           </div>
           <div style={{ marginTop: 28, display: 'flex', gap: 16, alignItems: 'center' }}>
             <div className="tag">v0.1 — alpha</div>
-            <div className="tag">build 2026.05.27</div>
+            <div className="tag">ops date {simDate(0)}</div>
             <div className="tag warn">tutorial available</div>
           </div>
         </div>
@@ -75,11 +76,13 @@ export function MainMenu() {
             fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--fg-40)',
             lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap',
           }}>{
-`> HELION-OS / boot.seq
-> mount /dev/belt0 ........... [ OK ]
-> link comlink ............... [ OK ]
-> verify save-blob ........... [ OK ]
-> sci-tek index .............. [ 24/40 ]
+`> HELION INDUSTRIES · OPS TERMINAL 7-C · BELT DIVISION
+> session date ................ ${simDate(0)}
+> operator .................... FOREMAN-GRADE / PROVISIONAL
+> mount /dev/belt0 ............ [ OK ]
+> link comlink ................ [ OK ]
+> verify save-blob ............ [ OK ]
+> sci-tek index ............... [ 24/40 ]
 > warning: 1 incoming asteroid trajectory unresolved
 > last command: ASTEROID ARCH-I :: queue mk2-mine`
           }</pre>
