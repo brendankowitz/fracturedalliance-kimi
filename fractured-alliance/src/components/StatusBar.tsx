@@ -1,5 +1,6 @@
 import { useGameStore } from '../store/gameStore';
 import { simDay } from '../utils/simDate';
+import { click } from '../audio/sfx';
 
 export function StatusBar({ message, speed, setSpeed, paused, setPaused }: {
   message: string;
@@ -21,7 +22,7 @@ export function StatusBar({ message, speed, setSpeed, paused, setPaused }: {
       <div className="center">
         <button
           className="btn sm ghost"
-          onClick={() => setPaused(!paused)}
+          onClick={() => { click(); setPaused(!paused); }}
           style={{ color: paused ? 'var(--warn)' : 'var(--fg-60)' }}
         >
           {paused ? '▶ RESUME' : '❚❚ PAUSE'}
@@ -30,7 +31,7 @@ export function StatusBar({ message, speed, setSpeed, paused, setPaused }: {
           <button
             key={s}
             className="btn sm ghost"
-            onClick={() => setSpeed(s)}
+            onClick={() => { click(); setSpeed(s); }}
             style={{ color: speed === s ? 'var(--warn)' : 'var(--fg-40)' }}
           >
             {s}×

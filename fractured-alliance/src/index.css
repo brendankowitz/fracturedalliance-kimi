@@ -233,6 +233,14 @@ input, select, textarea { font: inherit; color: inherit; }
   letter-spacing: 0.10em;
   color: var(--fg-40);
 }
+/* Day rollover pulse — class toggled for ~1.2s by useSfx. */
+.taskbar-date.day-flash .date {
+  animation: day-flash 1.2s ease-out;
+}
+@keyframes day-flash {
+  0%   { color: var(--warn); text-shadow: 0 0 10px var(--warn), 0 0 22px var(--warn); }
+  100% { color: var(--fg-100); text-shadow: none; }
+}
 .taskbar-ast {
   flex: 1;
   text-align: center;

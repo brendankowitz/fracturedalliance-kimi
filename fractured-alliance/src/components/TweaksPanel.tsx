@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ScreenId, GameSettings } from '../types';
+import { click } from '../audio/sfx';
 
 export function TweaksPanel({ settings, setSettings, setScreen }: {
   settings: GameSettings;
@@ -73,6 +74,27 @@ export function TweaksPanel({ settings, setSettings, setScreen }: {
               onChange={(e) => setSettings({ vignette: e.target.checked })}
             />
             Vignette
+          </label>
+
+          <div className="t-eyebrow" style={{ marginTop: 8 }}>CONSOLE</div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
+            <input
+              type="checkbox"
+              checked={settings.sound}
+              onChange={(e) => {
+                setSettings({ sound: e.target.checked });
+                if (e.target.checked) click();
+              }}
+            />
+            Sound FX
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
+            <input
+              type="checkbox"
+              checked={settings.pauseOnCrit}
+              onChange={(e) => setSettings({ pauseOnCrit: e.target.checked })}
+            />
+            Pause on critical events
           </label>
 
           <div className="t-eyebrow" style={{ marginTop: 8 }}>JUMP TO</div>

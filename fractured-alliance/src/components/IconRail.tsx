@@ -1,5 +1,6 @@
 import type { ScreenId } from '../types';
 import { useGameStore } from '../store/gameStore';
+import { click } from '../audio/sfx';
 
 interface RailEntry {
   id: ScreenId;
@@ -103,7 +104,7 @@ export function IconRail() {
           data-tip={`${e.label.toUpperCase()} · ${e.key}`}
           aria-label={`${e.label} (${e.key})`}
           aria-pressed={screen === e.id}
-          onClick={() => setScreen(e.id)}
+          onClick={() => { click(); setScreen(e.id); }}
         >
           {e.glyph}
         </button>

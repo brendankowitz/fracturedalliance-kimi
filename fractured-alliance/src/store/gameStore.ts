@@ -146,6 +146,16 @@ if (longShot) {
   longShot.resources = { power: 0, food: 0, water: 0, air: 0, pop: 0, popCap: 0, happiness: 50, rad: 38, ores: { selenium: 0, asteros: 0, barium: 0, crystalite: 0, quazinc: 0, bytanium: 0, korellium: 0, dragonium: 0, traxium: 0, nexos: 0 } };
 }
 
+const DEFAULT_SETTINGS: GameSettings = {
+  accent: 'warn',
+  density: 'regular',
+  scanlines: false,
+  vignette: true,
+  difficulty: 'director',
+  sound: true,
+  pauseOnCrit: false,
+};
+
 export const useGameStore = create<GameState>((set, get) => ({
   screen: 'menu',
   paused: false,
@@ -153,13 +163,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   tick: 341,
   treasury: 142840,
   alerts: 3,
-  settings: loadSettings() ?? {
-    accent: 'warn',
-    density: 'regular',
-    scanlines: false,
-    vignette: true,
-    difficulty: 'director',
-  },
+  settings: { ...DEFAULT_SETTINGS, ...(loadSettings() ?? {}) },
   selectedAsteroid: 'arch-i',
   selectedBuilding: 'mine2',
   asteroids: DEFAULT_ASTEROIDS,

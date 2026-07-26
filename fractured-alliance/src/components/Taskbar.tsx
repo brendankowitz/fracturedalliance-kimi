@@ -1,7 +1,8 @@
 import { useGameStore } from '../store/gameStore';
 import { simDate, simDay } from '../utils/simDate';
+import { click } from '../audio/sfx';
 
-export function Taskbar() {
+export function Taskbar({ dayFlash = false }: { dayFlash?: boolean }) {
   const setScreen = useGameStore((s) => s.setScreen);
   const treasury = useGameStore((s) => s.treasury);
   const alerts = useGameStore((s) => s.alerts);
@@ -19,7 +20,7 @@ export function Taskbar() {
 
   return (
     <header className="taskbar">
-      <div className="taskbar-brand" onClick={() => setScreen('menu')} style={{ cursor: 'pointer' }}>
+      <div className="taskbar-brand" onClick={() => { click(); setScreen('menu'); }} style={{ cursor: 'pointer' }}>
         <div className="brand-mark" />
         <div className="brand-text">
           <div className="brand-name">FRACTURED // ALLIANCE</div>
@@ -28,7 +29,7 @@ export function Taskbar() {
       </div>
 
       <div className="taskbar-mid">
-        <div className="taskbar-date">
+        <div className={`taskbar-date${dayFlash ? ' day-flash' : ''}`}>
           <span className="date">{dateStr}</span>
           <span className="ticks">DAY {dayStr} · T+{tickStr}</span>
         </div>

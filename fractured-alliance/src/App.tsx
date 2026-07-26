@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { useGameStore } from './store/gameStore'
+import { useSfx } from './hooks/useSfx'
+import { click } from './audio/sfx'
 import type { ScreenId } from './types'
 import { Taskbar } from './components/Taskbar'
 import { IconRail } from './components/IconRail'
@@ -27,12 +29,14 @@ const FKEY_SCREENS: Record<string, ScreenId> = {
 
 function App() {
   const { screen, settings, setScreen, setPaused, setSpeed, paused, speed, setSettings } = useGameStore()
+  const { dayFlash } = useSfx()
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const target = FKEY_SCREENS[e.key]
       if (!target) return
       e.preventDefault()
+      click()
       useGameStore.getState().setScreen(target)
     }
     window.addEventListener('keydown', onKeyDown)
@@ -99,7 +103,7 @@ function App() {
   return (
     <div className="stage">
       <div className={`canvas ${settings.scanlines ? 'scanlines' : ''}`} style={{ '--vignette-on': settings.vignette ? 1 : 0 } as React.CSSProperties}>
-        {screen !== 'menu' && <Taskbar />}
+        {screen !== 'menu' && <Taskbar dayFlash={dayFlash} />}
         <div style={{
           gridRow: screen === 'menu' ? '1 / -1' : 'auto',
           gridColumn: screen === 'menu' ? '1 / -1' : '1 / 2',

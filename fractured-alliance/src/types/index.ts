@@ -147,6 +147,8 @@ export interface GameSettings {
   scanlines: boolean;
   vignette: boolean;
   difficulty: Difficulty;
+  sound: boolean;
+  pauseOnCrit: boolean;
 }
 
 export interface SaveSlot {

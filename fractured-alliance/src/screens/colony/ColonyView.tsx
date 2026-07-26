@@ -4,6 +4,7 @@ import { BUILDINGS, EVENT_FEED, ASTEROIDS } from '../../data/gameData';
 import { BuildingGlyph } from '../../assets/BuildingGlyph';
 import { IsoSurface } from './IsoSurface';
 import { gridSizeFor, isBuildable } from './isoMath';
+import { click, place, error } from '../../audio/sfx';
 import type { AsteroidState } from '../../sim/types';
 
 const CATS = [
@@ -49,14 +50,19 @@ export function ColonyView() {
     if (placed[key]) {
       // Occupied cell: inspect (legacy grid had no click handler; the
       // inspect ring + overlay readout is the new select behavior).
+      click();
       setInspectedCell(key);
       return;
     }
     if (!sel) return;
     const [x, y] = key.split(',').map(Number);
-    if (!isBuildable(x, y, gridN)) return;
+    if (!isBuildable(x, y, gridN)) {
+      error();
+      return;
+    }
     setInspectedCell(null);
     placeBuilding(key, sel.id);
+    place();
   };
 
   return (

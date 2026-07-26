@@ -10,6 +10,7 @@ import {
   seedFromId,
 } from './isoMath';
 import { drawRock, drawStarfield } from '../../render/rock';
+import type { Rect } from '../../render/rock';
 
 export interface PlacedCell {
   kind: string;
@@ -22,6 +23,112 @@ interface View {
   zoom: number;
   panX: number;
   panY: number;
+}
+
+/* Ambient-life layer: the static scene (backdrop, starfield, rock,
+   grid, buildings) is rendered to an offscreen canvas once per state
+   change; a rAF loop blits that frame and draws only the dynamic
+   extras (star twinkle, smoke wisps, blinking nav lights). */
+interface AmbientStar { x: number; y: number; size: number; phase: number; speed: number }
+interface AmbientLight { x: number; y: number; phase: number; speed: number; crit: boolean }
+interface AmbientData {
+  stars: AmbientStar[];
+  lights: AmbientLight[];
+  mines: { x: number; y: number }[];
+}
+
+const EMPTY_AMBIENT: AmbientData = { stars: [], lights: [], mines: [] };
+
+/** Seeded, stable ambient anchors for the current scene. */
+function computeAmbient(
+  asteroidId: string,
+  placed: Record<string, PlacedCell>,
+  bounds: Rect
+): AmbientData {
+  const rand = mulberry32(seedFromId(asteroidId) ^ 0x51f15e);
+  const stars: AmbientStar[] = [];
+  for (let i = 0; i < 26; i++) {
+    stars.push({
+      x: bounds.minX - 120 + rand() * (bounds.maxX - bounds.minX + 240),
+      y: bounds.minY - 120 + rand() * (bounds.maxY - bounds.minY + 240),
+      size: rand() < 0.2 ? 1.6 : 1.0,
+      phase: rand() * Math.PI * 2,
+      speed: 0.4 + rand() * 0.9,
+    });
+  }
+  const lights: AmbientLight[] = [];
+  const mines: { x: number; y: number }[] = [];
+  for (const key of Object.keys(placed).sort()) {
+    const cell = placed[key];
+    if (cell.constructing) continue;
+    const [gx, gy] = key.split(',').map(Number);
+    const cc = cellCenter(gx, gy);
+    const cx = cc.x;
+    const cy = cc.y + 10;
+    const def = BUILDINGS.find((b) => b.id === cell.kind);
+    if (def?.cat === 'mine' && mines.length < 6) {
+      mines.push({ x: cx, y: cy - 12 });
+    }
+    if (lights.length < 7) {
+      lights.push({
+        x: cx,
+        y: cy - 14,
+        phase: rand() * Math.PI * 2,
+        speed: 0.5 + rand() * 0.4,
+        crit: cell.damaged === true,
+      });
+    }
+  }
+  return { stars, lights, mines };
+}
+
+/** Per-frame draw: blit cached static frame + tiny dynamic layer. */
+function drawAmbientFrame(
+  canvas: HTMLCanvasElement,
+  staticLayer: HTMLCanvasElement | null,
+  dpr: number,
+  view: View,
+  amb: AmbientData,
+  t: number
+) {
+  if (!staticLayer || staticLayer.width === 0 || canvas.width === 0) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(staticLayer, 0, 0);
+  ctx.setTransform(dpr * view.zoom, 0, 0, dpr * view.zoom, dpr * view.panX, dpr * view.panY);
+
+  /* Starfield twinkle */
+  for (const s of amb.stars) {
+    const tw = 0.5 + 0.5 * Math.sin(t * s.speed + s.phase);
+    ctx.fillStyle = `rgba(214, 226, 245, ${0.08 + 0.5 * tw * tw})`;
+    ctx.fillRect(s.x, s.y, s.size, s.size);
+  }
+
+  /* Thin smoke wisps rising from extraction buildings */
+  for (let m = 0; m < amb.mines.length; m++) {
+    const origin = amb.mines[m];
+    for (let i = 0; i < 3; i++) {
+      const p = (t * 0.16 + i / 3 + m * 0.37) % 1;
+      const a = 0.26 * (1 - p) * Math.min(1, p * 5);
+      if (a <= 0.01) continue;
+      ctx.beginPath();
+      ctx.arc(origin.x + Math.sin(p * 5 + m * 2.1) * 2.2 * p, origin.y - p * 26, 1.1 + p * 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(198, 200, 210, ${a})`;
+      ctx.fill();
+    }
+  }
+
+  /* Blinking navigation lights (slow, phase-offset; damaged = fast red) */
+  for (const l of amb.lights) {
+    const on = Math.sin(t * (l.crit ? 3.1 : 1.1) * l.speed * Math.PI + l.phase) > 0.72;
+    const a = on ? 0.95 : 0.14;
+    ctx.globalAlpha = a * 0.35;
+    dot(ctx, l.x, l.y, 2.6, l.crit ? T.crit : T.glow);
+    ctx.globalAlpha = a;
+    dot(ctx, l.x, l.y, 1.2, l.crit ? T.crit : T.glow);
+    ctx.globalAlpha = 1;
+  }
 }
 
 /* Building palette — mirrors assets/BuildingTile.tsx tones. */
@@ -72,6 +179,8 @@ export function IsoSurface({
 
   const viewRef = useRef(view);
   const dimsRef = useRef(dims);
+  const staticRef = useRef<HTMLCanvasElement | null>(null);
+  const ambientRef = useRef<AmbientData>(EMPTY_AMBIENT);
   const dragRef = useRef<{ x: number; y: number; panX: number; panY: number; moved: boolean } | null>(null);
   const fitKeyRef = useRef('');
 
@@ -206,7 +315,7 @@ export function IsoSurface({
     onHoverCell(null);
   };
 
-  /* ---- render -------------------------------------------------- */
+  /* ---- static render (once per state change, into offscreen) ---- */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || dims.w < 10 || dims.h < 10) return;
@@ -214,27 +323,43 @@ export function IsoSurface({
     if (!ctx) return; // jsdom: no canvas backend
 
     const { w, h, dpr } = dims;
-    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
+    const pxW = Math.round(w * dpr);
+    const pxH = Math.round(h * dpr);
+    if (canvas.width !== pxW || canvas.height !== pxH) {
+      canvas.width = pxW;
+      canvas.height = pxH;
     }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    let st = staticRef.current;
+    if (!st) {
+      st = document.createElement('canvas');
+      staticRef.current = st;
+    }
+    if (st.width !== pxW || st.height !== pxH) {
+      st.width = pxW;
+      st.height = pxH;
+    }
+    const sctx = st.getContext('2d');
+    if (!sctx) return;
+    sctx.setTransform(1, 0, 0, 1, 0, 0);
+    sctx.clearRect(0, 0, pxW, pxH);
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     /* Space backdrop */
-    const bg = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, Math.max(w, h) * 0.7);
+    const bg = sctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, Math.max(w, h) * 0.7);
     bg.addColorStop(0, '#11151f');
     bg.addColorStop(1, '#05070c');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, w, h);
+    sctx.fillStyle = bg;
+    sctx.fillRect(0, 0, w, h);
 
     /* World transform */
-    ctx.setTransform(dpr * view.zoom, 0, 0, dpr * view.zoom, dpr * view.panX, dpr * view.panY);
-    ctx.lineJoin = 'round';
+    sctx.setTransform(dpr * view.zoom, 0, 0, dpr * view.zoom, dpr * view.panX, dpr * view.panY);
+    sctx.lineJoin = 'round';
 
     /* Starfield (seeded, world space) */
     const starRand = mulberry32(seedFromId(asteroidId) ^ 0x9e3779b9);
     drawStarfield(
-      ctx,
+      sctx,
       starRand,
       bounds.minX - 120,
       bounds.minY - 120,
@@ -243,10 +368,34 @@ export function IsoSurface({
       170
     );
 
-    drawRock(ctx, asteroidId, n, bounds);
-    drawGrid(ctx, n, placed, hoverCell, inspectedCell);
-    drawCells(ctx, n, placed, hoverCell, inspectedCell, selected, phase);
+    drawRock(sctx, asteroidId, n, bounds);
+    drawGrid(sctx, n, placed, hoverCell, inspectedCell);
+    drawCells(sctx, n, placed, hoverCell, inspectedCell, selected, phase);
+
+    /* Refresh ambient anchors for the dynamic layer. */
+    ambientRef.current = computeAmbient(asteroidId, placed, bounds);
   });
+
+  /* ---- ambient life (rAF, dynamic layer only) ---- */
+  useEffect(() => {
+    let raf = 0;
+    const loop = (ts: number) => {
+      raf = requestAnimationFrame(loop);
+      if (document.hidden) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      drawAmbientFrame(
+        canvas,
+        staticRef.current,
+        dimsRef.current.dpr,
+        viewRef.current,
+        ambientRef.current,
+        ts / 1000
+      );
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   /* Cursor feedback */
   const hoverPlaced = hoverCell ? placed[hoverCell] : undefined;
