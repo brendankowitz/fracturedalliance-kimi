@@ -117,3 +117,37 @@ Before first push, git history was rewritten (26 commits, `filter-branch`) to re
 `claude-kimi.ps1` (contained a Kimi API key) and redact an API key embedded in
 `docs/superpowers/plans/2026-04-20-audio-art.md`. Both keys must be considered
 compromised and rotated. Full verification: no `sk-*` patterns remain in any revision.
+
+## 7. Stage handoffs (executed 2026-07-26)
+
+All five stages landed on `main` and are live on Pages. Test count 54 → 114 over the day;
+lint held at exactly the 28 pre-existing errors throughout (cleanup still owed).
+
+- **Stage 1 — iso colony surface** (`8ce4590` ancestry): `isoMath.ts`, `IsoSurface.tsx`,
+  ColonyView center swap. Bonus fix: building placement was previously unreachable from
+  the UI (hover-only cells, no click handler) — now click-to-place.
+- **Stage 2 — belt map** (`4cf8606`): `render/rock.ts` shared rock/starfield (colony rock
+  pixel-identical), `beltMath.ts`, `BeltCanvas.tsx`; double-click helion rock → colony.
+- **Stage 3 — console chrome** (`f8d0c4a`): `simDate.ts` (day 0 = 25-05-2496), Taskbar
+  date + `AST:` readout + real treasury, `IconRail` (F2–F8, real shortcuts), StatusBar
+  real readouts, conservative menu copy pass.
+- **Stage 4 — feel & feedback** (`154179d`): `audio/sfx.ts` procedural WebAudio
+  (autoplay-safe), `useSfx` day-chime + date flash + crit stinger, `pauseOnCrit` +
+  `sound` settings in TweaksPanel, IsoSurface ambient layer (twinkle/blink/smoke).
+- **Stage 5 — mechanics visibility** (`8ce4590`): `beltBadges.ts` pure derivation;
+  fleet silhouette arcs + hull chips + attack/patrol states, merchant docked marker,
+  engines-armed badges on the belt; orbital darts in the colony sky. **Renders only real
+  sim state** — no ship positions, real ram ETAs, or spy satellites exist in the sim, so
+  none were drawn. Adding those is sim work (see below).
+
+### Known limitations / next work
+
+- One unreproduced test flake observed during Stage 2 verification (1 failure in 8 local
+  runs, green in CI) — watch `beltMath` viewport-sensitive tests.
+- `speed` setting is display-only (fixed 6s tick loop in `startTickLoop`) — pre-existing;
+  making speed presets actually scale the loop is store work, not presentation.
+- Sim gaps that Stage 5 deliberately did not fake: ship world-positions/transit, real
+  asteroid-ram flight + ETA, spy-satellite entities, Federal Ore Transporter schedule.
+  These are the next sim-side milestones; the rendering hooks now exist to surface them.
+- Rock silhouette under-fills on XL/11×11 grids (no XL asteroid in current data).
+- DEEP/ORBITAL view buttons in Colony remain inert.
