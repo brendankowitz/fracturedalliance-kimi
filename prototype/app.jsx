@@ -10,15 +10,31 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 function App() {
   const [screen, setScreen] = React.useState('menu');
-  const [paused, setPaused] = React.useState(false);
-  const [speed, setSpeed] = React.useState(1);
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
-  // Treasury / tick ticker for liveness
-  const [tick, setTick] = React.useState(341);
+  // ----- Live game store wiring -----
+  // The store mutates its state object in place and calls subscribers on every
+  // change. We bump a version counter so React always re-renders the tree;
+  // components read window.GameStore.state directly (no prop drilling).
+  const store = window.GameStore;
+  const [, forceRender] = React.useState(0);
+  React.useEffect(() => {
+    const onChange = () => forceRender(v => (v + 1) & 0xffffff);
+    store.subscribe(onChange);
+    return () => store.unsubscribe(onChange);
+  }, []);
+
+  const gs = store.state;
+  const paused = gs.paused;
+  const speed = gs.speed;
+  const setPaused = (p) => store.dispatch({ type: 'setPaused', payload: { paused: p } });
+  const setSpeed = (s) => store.dispatch({ type: 'setSpeed', payload: { speed: s } });
+
+  // Simulation clock: 30 interval ticks = 1 game day. At 1x, interval = 2000ms
+  // so a day is ~60s real-time. Higher speed shortens the interval.
   React.useEffect(() => {
     if (paused) return;
-    const iv = setInterval(() => setTick(x => x + 1), 6000 / speed);
+    const iv = setInterval(() => store.advanceTick(1 / 30), 2000 / speed);
     return () => clearInterval(iv);
   }, [paused, speed]);
 
@@ -68,8 +84,8 @@ function App() {
 
   const screenContent = (() => {
     switch (screen) {
-      case 'menu':      return <MainMenu onEnter={() => setScreen('sector')} />;
-      case 'sector':    return <SectorMap onJumpToColony={() => setScreen('colony')} />;
+      case 'menu':      return <MainMenu onEnter={() => setScreen('sector')} onNewGame={() => { store.dispatch({ type: 'newGame' }); setScreen('sector'); }} />;
+      case 'sector':    return <SectorMap onJumpToColony={() => setScreen('colony')} setScreen={setScreen} />;
       case 'colony':    return <ColonyView />;
       case 'scitek':    return <SciTek />;
       case 'diplomacy': return <Diplomacy />;
@@ -87,10 +103,10 @@ function App() {
           <Taskbar
             screen={screen}
             setScreen={setScreen}
-            treasury={142840}
-            time={`${Math.floor(tick / 30)}.${(tick % 30).toString().padStart(2, '0')}`}
-            tick={tick.toString().padStart(4, '0')}
-            alerts={3}
+            treasury={Math.round(gs.credits)}
+            time={`${Math.floor(gs.day)}.${Math.floor((gs.day % 1) * 100).toString().padStart(2, '0')}`}
+            tick={Math.floor(gs.day).toString().padStart(4, '0')}
+            alerts={gs.events.filter(e => e.kind === 'crit' || e.kind === 'warn').length}
           />
         )}
         <div style={{

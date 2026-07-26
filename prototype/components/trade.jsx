@@ -1,9 +1,38 @@
 // trade.jsx — Commerce & Logistics screen
 // Three tabs: Federal Ore Transporter / Independent Merchants / Black Market
 
+// Aggregate ore stockpiles across every Helion asteroid -> { oreId: tonnes }.
+function aggregateOres() {
+  const totals = {};
+  const list = window.GameStore.helionAsteroids();
+  for (let i = 0; i < list.length; i++) {
+    const ores = list[i].ores || {};
+    const keys = Object.keys(ores);
+    for (let j = 0; j < keys.length; j++) {
+      totals[keys[j]] = (totals[keys[j]] || 0) + ores[keys[j]];
+    }
+  }
+  return totals;
+}
+
+// Sell the entire stockpile of one ore across all Helion asteroids on a channel.
+function sellAllOre(oreId, channel) {
+  const store = window.GameStore;
+  const list = store.helionAsteroids();
+  for (let i = 0; i < list.length; i++) {
+    const have = (list[i].ores || {})[oreId] || 0;
+    if (have > 0.5) {
+      store.dispatch({ type: 'sellOre', payload: { asteroidId: list[i].id, oreId: oreId, qty: have, channel: channel } });
+    }
+  }
+}
+
 function Trade() {
+  const store = window.GameStore;
+  const gs = store.state;
   const [channel, setChannel] = React.useState('federal');
   const ores = window.GameData.ORES;
+  const totals = aggregateOres();
 
   return (
     <div className="screen screen-enter" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', height: '100%' }}>
@@ -16,8 +45,8 @@ function Trade() {
           </div>
           <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
             <div className="t-meta">treasury</div>
-            <div className="t-data" style={{ fontSize: 22, color: 'var(--warn)' }}>142,840 cr</div>
-            <div className="stat-delta up">▲ +1,820 / day</div>
+            <div className="t-data" style={{ fontSize: 22, color: 'var(--warn)' }}>{Math.round(gs.credits).toLocaleString()} cr</div>
+            <div className={'stat-delta ' + (gs.incomePerDay >= 0 ? 'up' : 'down')}>{gs.incomePerDay >= 0 ? '▲ +' : '▼ '}{Math.round(gs.incomePerDay).toLocaleString()} / day</div>
           </div>
         </div>
 
@@ -27,19 +56,19 @@ function Trade() {
           <ChannelTab id="merchant" current={channel} onClick={() => setChannel('merchant')}
             label="INDEPENDENT MERCHANTS" sub="1.0× / docked" color="warn" />
           <ChannelTab id="black" current={channel} onClick={() => setChannel('black')}
-            label="BLACK MARKET" sub="1.6× / risk 35%" color="illegal" />
+            label="BLACK MARKET" sub={`1.6× / suspicion ${Math.round(gs.suspicion)}`} color="illegal" />
         </div>
 
         {/* Main content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 22 }}>
-          {channel === 'federal'  && <FederalChannel ores={ores} />}
+          {channel === 'federal'  && <FederalChannel ores={ores} totals={totals} prices={gs.marketPrices} />}
           {channel === 'merchant' && <MerchantChannel />}
-          {channel === 'black'    && <BlackMarketChannel />}
+          {channel === 'black'    && <BlackMarketChannel totals={totals} prices={gs.marketPrices} suspicion={gs.suspicion} />}
         </div>
       </section>
 
       <aside style={{ background: 'var(--bg-base)', overflowY: 'auto' }}>
-        <CargoStockpile ores={ores} />
+        <CargoStockpile ores={ores} totals={totals} />
         <RecentTrades />
       </aside>
     </div>
@@ -72,7 +101,7 @@ function ChannelTab({ id, current, onClick, label, sub, color }) {
   );
 }
 
-function FederalChannel({ ores }) {
+function FederalChannel({ ores, totals, prices }) {
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 22 }}>
@@ -124,8 +153,8 @@ function FederalChannel({ ores }) {
           </thead>
           <tbody>
             {ores.map(o => {
-              const stock = [320, 180, 940, 412, 88, 240, 56, 28, 12, 2][o.tier - 1] + Math.floor(Math.random() * 300);
-              const fedPrice = Math.round(o.price * 0.7);
+              const stock = Math.round(totals[o.id] || 0);
+              const fedPrice = Math.round((prices[o.id] || o.price) * 0.7);
               const trend = ['barium','crystalite','dragonium'].includes(o.id) ? 'up' : ['korellium'].includes(o.id) ? 'down' : 'flat';
               return (
                 <tr key={o.id} style={{ borderTop: '1px solid var(--line-soft)' }}>
@@ -143,7 +172,12 @@ function FederalChannel({ ores }) {
                   </td>
                   <td style={{ ...td, textAlign: 'right', color: 'var(--warn)' }}>{(stock * fedPrice).toLocaleString()}</td>
                   <td style={{ ...td, textAlign: 'center' }}>
-                    <button className="btn sm">SELL ALL</button>
+                    <button
+                      className="btn sm"
+                      disabled={stock <= 0}
+                      style={stock <= 0 ? { opacity: 0.4, cursor: 'not-allowed' } : null}
+                      onClick={() => sellAllOre(o.id, 'federal')}
+                    >SELL ALL</button>
                   </td>
                 </tr>
               );
@@ -156,13 +190,16 @@ function FederalChannel({ ores }) {
 }
 
 function MerchantChannel() {
-  const stock = window.GameData.MERCHANT_STOCK;
+  const store = window.GameStore;
+  const gs = store.state;
+  const stock = gs.merchantStock;
+  const dockName = (gs.asteroids[gs.merchantDockAsteroid] || {}).name || 'ARCH-I';
   return (
     <div>
       <div className="panel" style={{ marginBottom: 22 }}>
         <div className="panel-head">
-          <span>CONVOY DOCKED · ARCH-I</span>
-          <span className="head-meta">departs in 6 days</span>
+          <span>{gs.merchantDocked ? `CONVOY DOCKED · ${dockName.toUpperCase()}` : 'NO CONVOY DOCKED'}</span>
+          <span className="head-meta">departs in {gs.merchantDaysLeft} days</span>
         </div>
         <div className="panel-body" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 22, alignItems: 'center' }}>
           <div style={{
@@ -211,17 +248,25 @@ function MerchantChannel() {
             </tr>
           </thead>
           <tbody>
-            {stock.map(i => (
-              <tr key={i.id} style={{ borderTop: '1px solid var(--line-soft)' }}>
+            {stock.map(i => {
+              const canBuy = i.qty > 0 && gs.credits >= i.price;
+              return (
+              <tr key={i.id} style={{ borderTop: '1px solid var(--line-soft)', opacity: i.qty > 0 ? 1 : 0.45 }}>
                 <td style={td}><span style={{ color: 'var(--fg-100)' }}>{i.name}</span></td>
                 <td style={{ ...td, textAlign: 'right' }}>{i.qty}</td>
                 <td style={{ ...td, textAlign: 'right', color: 'var(--warn)' }}>{i.price.toLocaleString()} cr</td>
                 <td style={td}>{i.rare && <span className="tag warn">RARE</span>}</td>
                 <td style={{ ...td, textAlign: 'right' }}>
-                  <button className="btn sm">BUY · 1</button>
+                  <button
+                    className="btn sm"
+                    disabled={!canBuy}
+                    style={!canBuy ? { opacity: 0.4, cursor: 'not-allowed' } : null}
+                    onClick={() => store.dispatch({ type: 'buyMerchantItem', payload: { itemId: i.id } })}
+                  >{i.qty > 0 ? 'BUY · 1' : 'SOLD OUT'}</button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -229,9 +274,12 @@ function MerchantChannel() {
   );
 }
 
-function BlackMarketChannel() {
+function BlackMarketChannel({ totals, prices, suspicion }) {
   const stock = window.GameData.BLACK_MARKET;
-  const suspicion = 42;
+  const ores = window.GameData.ORES;
+  const susp = Math.round(suspicion);
+  // High-value ores the broker will buy at 1.6x (tier 3+).
+  const sellable = ores.filter(o => o.tier >= 3 && (totals[o.id] || 0) > 0.5);
   return (
     <div>
       <div style={{
@@ -244,15 +292,52 @@ function BlackMarketChannel() {
         <div>
           <div className="t-eyebrow" style={{ color: 'var(--illegal)' }}>⛧ FEDERATION SUSPICION</div>
           <div style={{ marginTop: 8, position: 'relative', height: 16, background: 'var(--bg-input)', border: '1px solid var(--line-soft)' }}>
-            <div style={{ width: `${suspicion}%`, height: '100%', background: 'var(--illegal)', opacity: 0.6 }} />
+            <div style={{ width: `${susp}%`, height: '100%', background: 'var(--illegal)', opacity: 0.6 }} />
             <div style={{ position: 'absolute', left: '70%', top: -2, bottom: -2, width: 1, background: 'var(--crit)' }} />
             <div style={{ position: 'absolute', left: 'calc(70% + 4px)', top: -16, fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--crit)' }}>INVESTIGATION ▾</div>
           </div>
           <div className="t-meta" style={{ marginTop: 10 }}>
-            <span style={{ color: 'var(--illegal)' }}>42 / 100</span> · Each sale +5–18 · Decays at −0.4/day · Investigation triggers at 70
+            <span style={{ color: 'var(--illegal)' }}>{susp} / 100</span> · Each sale +5–18 · Decays at −0.4/day · Investigation triggers at 70
           </div>
         </div>
-        <div className="t-data" style={{ fontSize: 32, color: 'var(--illegal)' }}>42</div>
+        <div className="t-data" style={{ fontSize: 32, color: 'var(--illegal)' }}>{susp}</div>
+      </div>
+
+      {/* Sell player ore to the broker at 1.6x (raises suspicion) */}
+      <div className="panel" style={{ marginBottom: 22 }}>
+        <div className="panel-head">
+          <span style={{ color: 'var(--illegal)' }}>OFFLOAD ORE · 1.6× · UNTRACED</span>
+          <span className="head-meta">each sale raises suspicion</span>
+        </div>
+        <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {sellable.length === 0 && (
+            <div className="t-meta">No tier-3+ ore in stockpile to offload.</div>
+          )}
+          {sellable.map(o => {
+            const stockT = Math.round(totals[o.id] || 0);
+            const unit = Math.round((prices[o.id] || o.price) * 1.6);
+            return (
+              <div key={o.id} style={{
+                display: 'grid', gridTemplateColumns: '1fr auto auto auto',
+                gap: 14, alignItems: 'center', padding: 14,
+                background: 'var(--bg-raised)', border: '1px solid var(--illegal-dim)', borderLeft: '3px solid var(--illegal)',
+              }}>
+                <div>
+                  <div style={{ fontSize: 14, color: 'var(--fg-100)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 10, height: 10, background: o.color }} />{o.name}
+                  </div>
+                  <div className="t-meta" style={{ marginTop: 4 }}>Stockpile {stockT}t · {unit} cr/t</div>
+                </div>
+                <div className="tag illegal">1.6×</div>
+                <div style={{ textAlign: 'right' }}>
+                  <div className="t-data" style={{ fontSize: 18, color: 'var(--illegal)' }}>{(stockT * unit).toLocaleString()}</div>
+                  <div className="t-meta">cr</div>
+                </div>
+                <button className="btn illegal sm" onClick={() => sellAllOre(o.id, 'black')}>SELL ▸</button>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="panel">
@@ -312,13 +397,13 @@ function PriceSparkline() {
   );
 }
 
-function CargoStockpile({ ores }) {
+function CargoStockpile({ ores, totals }) {
   return (
     <div style={{ padding: 18, borderBottom: '1px solid var(--line-soft)' }}>
       <div className="t-eyebrow">STOCKPILE · ALL ASTEROIDS</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
-        {ores.slice(0, 7).map((o, i) => {
-          const stock = [840, 620, 440, 280, 160, 90, 22][i];
+        {ores.map((o) => {
+          const stock = Math.round(totals[o.id] || 0);
           const cap = 1000;
           return (
             <div key={o.id}>

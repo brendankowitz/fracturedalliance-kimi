@@ -2,9 +2,19 @@
 // Left rail of discipline filters, main grid of blueprint cards, right detail panel.
 
 function SciTek() {
+  const store = window.GameStore;
+  const gs = store.state;
   const [discipline, setDiscipline] = React.useState('all');
   const [selected, setSelected] = React.useState('photon');
-  const blueprints = window.GameData.BLUEPRINTS;
+
+  // Merge static blueprint metadata with live owned/cost from the store.
+  const blueprints = window.GameData.BLUEPRINTS.map(b => {
+    const live = gs.blueprints[b.id] || {};
+    return Object.assign({}, b, {
+      bought: live.owned != null ? live.owned : b.bought,
+      cost: live.cost != null ? live.cost : b.cost,
+    });
+  });
 
   const disciplines = [
     { id: 'all',        label: 'All',          count: blueprints.length },
@@ -73,8 +83,8 @@ function SciTek() {
         <div style={{ padding: 14, borderTop: '1px solid var(--line-soft)' }}>
           <div className="t-eyebrow">TREASURY</div>
           <div className="stat" style={{ marginTop: 8 }}>
-            <div className="stat-value warn">142,840 cr</div>
-            <div className="stat-label">+1,820 /day · 7-day avg</div>
+            <div className="stat-value warn">{Math.round(gs.credits).toLocaleString()} cr</div>
+            <div className="stat-label">{gs.incomePerDay >= 0 ? '+' : ''}{Math.round(gs.incomePerDay).toLocaleString()} /day · auto-sell</div>
           </div>
         </div>
       </aside>
@@ -111,7 +121,11 @@ function SciTek() {
       </section>
 
       {/* Detail panel */}
-      <BlueprintDetail bp={sel} />
+      <BlueprintDetail
+        bp={sel}
+        credits={gs.credits}
+        onBuy={() => store.dispatch({ type: 'buyBlueprint', payload: { blueprintId: sel.id } })}
+      />
     </div>
   );
 }
@@ -191,8 +205,9 @@ function BlueprintCard({ bp, selected, onClick }) {
   );
 }
 
-function BlueprintDetail({ bp }) {
+function BlueprintDetail({ bp, credits, onBuy }) {
   if (!bp) return <aside style={{ background: 'var(--bg-base)', borderLeft: '1px solid var(--line-soft)' }} />;
+  const canAfford = credits >= bp.cost;
   return (
     <aside style={{
       background: 'var(--bg-base)',
@@ -223,6 +238,7 @@ function BlueprintDetail({ bp }) {
       <div style={{ padding: 20 }}>
         <div className="t-eyebrow">SPECIFICATION</div>
         <table style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 11, marginTop: 10, borderCollapse: 'collapse' }}>
+          <tbody>
           {[
             ['Discipline', bp.disc],
             ['Tier', `T${bp.tier} of 4`],
@@ -236,6 +252,7 @@ function BlueprintDetail({ bp }) {
               <td style={{ padding: '6px 0', color: 'var(--fg-100)', textAlign: 'right', borderBottom: '1px solid var(--line-soft)' }}>{v}</td>
             </tr>
           ))}
+          </tbody>
         </table>
       </div>
 
@@ -274,7 +291,14 @@ function BlueprintDetail({ bp }) {
           <button className="btn" disabled>◉ ACQUIRED</button>
         ) : (
           <>
-            <button className="btn primary">PURCHASE — {bp.cost.toLocaleString()} cr</button>
+            <button
+              className="btn primary"
+              onClick={canAfford ? onBuy : undefined}
+              disabled={!canAfford}
+              style={!canAfford ? { opacity: 0.5, cursor: 'not-allowed' } : null}
+            >
+              {canAfford ? `ACQUIRE BLUEPRINT — ${bp.cost.toLocaleString()} cr` : `INSUFFICIENT FUNDS — ${bp.cost.toLocaleString()} cr`}
+            </button>
             <button className="btn ghost">QUEUE FOR LATER</button>
           </>
         )}

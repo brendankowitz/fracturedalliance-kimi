@@ -1,7 +1,7 @@
 // menu.jsx — main menu / boot screen
 // Renders the wordmark, scenario picker, save slots.
 
-function MainMenu({ onEnter }) {
+function MainMenu({ onEnter, onNewGame }) {
   const [hoveredScenario, setHovered] = React.useState('expedition');
 
   const scenarios = [
@@ -66,7 +66,7 @@ function MainMenu({ onEnter }) {
 }</pre>
           <div style={{ display: 'flex', gap: 10 }}>
             <button className="btn primary" onClick={() => onEnter('sector')}>▶ RESUME MATCH</button>
-            <button className="btn">+ NEW MATCH</button>
+            <button className="btn" onClick={onNewGame}>+ NEW MATCH</button>
             <button className="btn ghost">TUTORIAL</button>
             <button className="btn ghost">SETTINGS</button>
           </div>

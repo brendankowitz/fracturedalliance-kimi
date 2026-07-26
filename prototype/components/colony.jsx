@@ -2,39 +2,35 @@
 // Three-pane: left = build palette, center = grid + asteroid stats, right = queue + events
 
 function ColonyView() {
-  const [selectedBuilding, setSelectedBuilding] = React.useState('mine2');
+  const store = window.GameStore;
+  const gs = store.state;
   const [hoverCell, setHoverCell] = React.useState(null);
   const buildings = window.GameData.BUILDINGS;
 
-  // Pre-placed grid for Arch-I (9×9). Each cell has either { kind, hp%, building? } or empty.
-  const placed = React.useMemo(() => {
-    const g = {};
-    g['4,4'] = { kind: 'cpu' };
-    g['3,4'] = { kind: 'air' };
-    g['5,4'] = { kind: 'hydration' };
-    g['4,3'] = { kind: 'living' };
-    g['4,5'] = { kind: 'living' };
-    g['3,3'] = { kind: 'power1' };
-    g['5,5'] = { kind: 'power1' };
-    g['2,4'] = { kind: 'mine1' };
-    g['6,4'] = { kind: 'mine2' };
-    g['3,5'] = { kind: 'hydroponics' };
-    g['5,3'] = { kind: 'medical' };
-    g['2,3'] = { kind: 'storage' };
-    g['6,5'] = { kind: 'storage' };
-    g['2,5'] = { kind: 'laser' };
-    g['6,3'] = { kind: 'laser' };
-    g['4,6'] = { kind: 'silo' };
-    g['1,4'] = { kind: 'deep' };
-    g['7,4'] = { kind: 'security' };
-    g['4,2'] = { kind: 'resiblock' };
-    g['3,6'] = { kind: 'pleasure', damaged: true };
-    g['1,3'] = { kind: 'mine1', constructing: true, progress: 0.55 };
-    g['1,5'] = { kind: 'mine1', constructing: true, progress: 0.32 };
-    return g;
-  }, []);
+  // Selected asteroid (fall back to arch-i, then first Helion colony).
+  const helion = store.helionAsteroids();
+  let astData = gs.asteroids[gs.selectedAsteroidId];
+  if (!astData || astData.ownerId !== 'helion') astData = gs.asteroids['arch-i'] || helion[0];
+
+  const selectedBuilding = gs.colonyViewBuildingSelected;
+  const setSelectedBuilding = (kind) => store.dispatch({ type: 'selectBuilding', payload: { kind } });
+
+  // Build the rendered cell map from live grid + the active build-queue item
+  // (first queued item shows as constructing).
+  const placed = {};
+  const gk = Object.keys(astData.grid);
+  for (let i = 0; i < gk.length; i++) placed[gk[i]] = { kind: astData.grid[gk[i]] };
+  astData.buildQueue.forEach((q, idx) => {
+    if (placed[q.cell]) return; // grid wins if somehow occupied
+    placed[q.cell] = { kind: q.kind, constructing: true, progress: q.progress, active: idx === 0 };
+  });
 
   const sel = buildings.find(b => b.id === selectedBuilding);
+
+  const onPlace = (cell) => {
+    if (!sel) return;
+    store.dispatch({ type: 'placeBuilding', payload: { asteroidId: astData.id, kind: sel.id, cell } });
+  };
 
   return (
     <div className="screen screen-enter" style={{ display: 'grid', gridTemplateColumns: '260px 1fr 320px', height: '100%' }}>
@@ -42,19 +38,25 @@ function ColonyView() {
         buildings={buildings}
         selected={selectedBuilding}
         onSelect={setSelectedBuilding}
+        credits={gs.credits}
       />
       <ColonyGrid
+        astData={astData}
+        helion={helion}
         placed={placed}
         selected={sel}
+        credits={gs.credits}
         hoverCell={hoverCell}
         onHover={setHoverCell}
+        onPlace={onPlace}
+        onSwitch={(id) => store.dispatch({ type: 'selectAsteroid', payload: { asteroidId: id } })}
       />
-      <ColonySidebar />
+      <ColonySidebar astData={astData} />
     </div>
   );
 }
 
-function ColonyPalette({ buildings, selected, onSelect }) {
+function ColonyPalette({ buildings, selected, onSelect, credits }) {
   const cats = [
     { id: 'core',  label: 'Core' },
     { id: 'life',  label: 'Life Support' },
@@ -111,7 +113,9 @@ function ColonyPalette({ buildings, selected, onSelect }) {
               }}>
                 ─ {cat.label}
               </div>
-              {items.map(b => (
+              {items.map(b => {
+                const afford = (b.cost || 0) <= credits;
+                return (
                 <button
                   key={b.id}
                   onClick={() => onSelect(b.id)}
@@ -126,6 +130,7 @@ function ColonyPalette({ buildings, selected, onSelect }) {
                     background: selected === b.id ? 'var(--bg-elev)' : 'transparent',
                     borderLeft: selected === b.id ? '2px solid var(--warn)' : '2px solid transparent',
                     color: 'var(--fg-80)',
+                    opacity: afford ? 1 : 0.45,
                     transition: 'background 100ms',
                   }}
                 >
@@ -137,11 +142,12 @@ function ColonyPalette({ buildings, selected, onSelect }) {
                     color: selected === b.id ? 'var(--warn)' : 'var(--fg-80)',
                   }}><BuildingGlyph id={b.id} size={18} /></div>
                   <div style={{ fontSize: 12 }}>{b.name}</div>
-                  <div className="t-data" style={{ fontSize: 10, color: 'var(--fg-40)' }}>
+                  <div className="t-data" style={{ fontSize: 10, color: afford ? 'var(--fg-40)' : 'var(--crit)' }}>
                     {b.cost ? `${b.cost}` : '—'}
                   </div>
                 </button>
-              ))}
+                );
+              })}
             </div>
           );
         })}
@@ -150,34 +156,53 @@ function ColonyPalette({ buildings, selected, onSelect }) {
   );
 }
 
-function ColonyGrid({ placed, selected, hoverCell, onHover }) {
+function ColonyGrid({ astData, helion, placed, selected, credits, hoverCell, onHover, onPlace, onSwitch }) {
   const N = 9;
+  const a = astData;
+
+  // Prev / next Helion asteroid for the switcher buttons.
+  const order = helion.map(h => h.id);
+  const idx = order.indexOf(a.id);
+  const prevId = order.length ? order[(idx - 1 + order.length) % order.length] : a.id;
+  const nextId = order.length ? order[(idx + 1) % order.length] : a.id;
+  const prevAst = helion.find(h => h.id === prevId);
+  const nextAst = helion.find(h => h.id === nextId);
+
+  const popPct = a.maxPop > 0 ? (a.pop / a.maxPop) * 100 : 0;
+  const powerPct = a.powerGenerated > 0 ? Math.min(100, (a.powerSurplus / a.powerGenerated) * 100 + 50) : 0;
+
   return (
     <section style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Top stats bar */}
       <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line-soft)' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <div className="t-eyebrow" style={{ color: 'var(--warn)' }}>COLONY · ARCH-I · L-class · HOME</div>
+            <div className="t-eyebrow" style={{ color: 'var(--warn)' }}>
+              COLONY · {a.name.toUpperCase()} · {a.size}-class · {a.status.toUpperCase()}
+            </div>
             <div style={{ fontSize: 24, fontWeight: 500, letterSpacing: '-0.02em', marginTop: 4 }}>
-              Arch-I Operations
+              {a.name} Operations
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn sm ghost">‹ Forge-3</button>
-            <button className="btn sm ghost">Kepler-7 ›</button>
+            {helion.length > 1 && (
+              <>
+                <button className="btn sm ghost" onClick={() => onSwitch(prevId)}>‹ {prevAst ? prevAst.name : '—'}</button>
+                <button className="btn sm ghost" onClick={() => onSwitch(nextId)}>{nextAst ? nextAst.name : '—'} ›</button>
+              </>
+            )}
             <button className="btn sm">SUPERVISORS</button>
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 14 }}>
-          <ResourceStat label="POPULATION" value="480 / 700"   bar={68} color="signal" />
-          <ResourceStat label="HAPPINESS"  value="78"          bar={78} color="ally" />
-          <ResourceStat label="POWER"      value="+12 / 84"    bar={86} color="warn" />
-          <ResourceStat label="FOOD"       value="+8 / day"    bar={92} color="ally" />
-          <ResourceStat label="WATER"      value="+12 / day"   bar={88} color="signal" />
-          <ResourceStat label="AIR"        value="+4 / day"    bar={62} color="signal" />
-          <ResourceStat label="RAD"        value="8 mSv"       bar={8}  color="ally" />
+          <ResourceStat label="POPULATION" value={`${Math.round(a.pop)} / ${a.maxPop}`} bar={Math.round(popPct)} color="signal" />
+          <ResourceStat label="HAPPINESS"  value={`${Math.round(a.happiness)}`} bar={Math.round(a.happiness)} color={a.happiness < 50 ? 'crit' : a.happiness < 70 ? 'warn' : 'ally'} />
+          <ResourceStat label="POWER"      value={`${a.powerSurplus >= 0 ? '+' : ''}${Math.round(a.powerSurplus)} / ${a.powerGenerated}`} bar={Math.round(powerPct)} color={a.powerSurplus >= 0 ? 'warn' : 'crit'} />
+          <ResourceStat label="FOOD"       value={`+${Math.round(a.foodPerDay)}/day`} bar={Math.round(a.foodPct)} color={a.foodPct < 40 ? 'crit' : a.foodPct < 60 ? 'warn' : 'ally'} />
+          <ResourceStat label="WATER"      value={`+${Math.round(a.waterPerDay)}/day`} bar={Math.round(a.waterPct)} color="signal" />
+          <ResourceStat label="AIR"        value={`+${Math.round(a.airPerDay)}/day`} bar={Math.round(a.airPct)} color="signal" />
+          <ResourceStat label="RAD"        value={`${Math.round(a.rad)} mSv`} bar={Math.min(100, a.rad)} color={a.rad > 30 ? 'crit' : a.rad > 10 ? 'warn' : 'ally'} />
         </div>
       </div>
 
@@ -216,6 +241,7 @@ function ColonyGrid({ placed, selected, hoverCell, onHover }) {
             const dist = Math.abs(x - 4) + Math.abs(y - 4);
             const onRim = dist > 5; // outer corners are "off-asteroid"
             const isHover = hoverCell === key;
+            const affordSel = selected ? (selected.cost || 0) <= credits : false;
             return (
               <Cell
                 key={key}
@@ -224,8 +250,10 @@ function ColonyGrid({ placed, selected, hoverCell, onHover }) {
                 onRim={onRim}
                 isHover={isHover}
                 selected={selected}
+                affordSel={affordSel}
                 onEnter={() => onHover(key)}
                 onLeave={() => onHover(null)}
+                onClick={() => { if (!cell && !onRim && selected) onPlace(key); }}
               />
             );
           })}
@@ -246,7 +274,7 @@ function ColonyGrid({ placed, selected, hoverCell, onHover }) {
   );
 }
 
-function Cell({ x, y, cell, onRim, isHover, selected, onEnter, onLeave }) {
+function Cell({ x, y, cell, onRim, isHover, selected, affordSel, onEnter, onLeave, onClick }) {
   const def = cell ? window.GameData.BUILDINGS.find(b => b.id === cell.kind) : null;
   const canPlace = !cell && !onRim;
 
@@ -262,10 +290,10 @@ function Cell({ x, y, cell, onRim, isHover, selected, onEnter, onLeave }) {
       : '1px solid var(--line)';
     color = cell.constructing ? 'var(--warn)' : 'var(--fg-100)';
   }
-  if (isHover && canPlace) {
-    bg = 'var(--warn-bg)';
-    border = '1px solid var(--warn)';
-    glow = '0 0 8px var(--warn-dim)';
+  if (isHover && canPlace && selected) {
+    bg = affordSel ? 'var(--warn-bg)' : 'var(--crit-bg)';
+    border = '1px solid ' + (affordSel ? 'var(--warn)' : 'var(--crit)');
+    glow = '0 0 8px ' + (affordSel ? 'var(--warn-dim)' : 'var(--crit-dim)');
   }
   if (isHover && cell) {
     border = '1px solid var(--signal)';
@@ -277,10 +305,12 @@ function Cell({ x, y, cell, onRim, isHover, selected, onEnter, onLeave }) {
     <button
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
+      onClick={onClick}
+      title={def ? def.name : (canPlace && selected ? `Place ${selected.name} — ${selected.cost} cr` : '')}
       style={{
         background: bg,
         border,
-        cursor: cell ? 'pointer' : (canPlace ? 'crosshair' : 'not-allowed'),
+        cursor: cell ? 'pointer' : (canPlace && selected ? 'crosshair' : 'not-allowed'),
         padding: 0,
         position: 'relative',
         boxShadow: glow,
@@ -343,7 +373,12 @@ function ResourceStat({ label, value, bar, color }) {
   );
 }
 
-function ColonySidebar() {
+function ColonySidebar({ astData }) {
+  const a = astData;
+  const queue = a.buildQueue || [];
+  const activeCount = queue.filter(q => q.progress > 0).length;
+  const events = window.GameStore.state.events;
+
   return (
     <aside style={{
       background: 'var(--bg-base)',
@@ -354,17 +389,30 @@ function ColonySidebar() {
       {/* Build Queue */}
       <div style={{ padding: 14, borderBottom: '1px solid var(--line-soft)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="t-eyebrow">BUILD QUEUE · ARCH-I</div>
-          <div className="t-meta" style={{ color: 'var(--warn)' }}>3 active</div>
+          <div className="t-eyebrow">BUILD QUEUE · {a.name.toUpperCase()}</div>
+          <div className="t-meta" style={{ color: 'var(--warn)' }}>{activeCount} active</div>
         </div>
       </div>
       <div style={{ overflowY: 'auto', maxHeight: 280 }}>
-        <QueueItem name="Mine Mk1" cell="[1,3]" pct={55}  eta="2d"  active />
-        <QueueItem name="Mine Mk1" cell="[1,5]" pct={32}  eta="3d"  active />
-        <QueueItem name="Storage Tower" cell="[7,5]" pct={0} eta="4d" />
-        <QueueItem name="Laser Turret" cell="[3,2]" pct={0} eta="5d" />
-        <QueueItem name="Mine Mk2" cell="[7,3]" pct={0} eta="7d" />
-        <QueueItem name="Pleasure Dome" cell="—" pct={0} eta="8d" disabled note="awaiting medical clear" />
+        {queue.length === 0 && (
+          <div style={{ padding: 14, color: 'var(--fg-40)', fontSize: 11, fontStyle: 'italic' }}>
+            Queue empty — select a building from the palette and click an empty grid cell to construct.
+          </div>
+        )}
+        {queue.map((q, i) => {
+          const pct = Math.round(q.progress * 100);
+          const daysLeft = Math.ceil((1 - q.progress) * q.totalDays);
+          return (
+            <QueueItem
+              key={q.id}
+              name={q.label || q.kind}
+              cell={`[${q.cell}]`}
+              pct={pct}
+              eta={`${daysLeft}d`}
+              active={i === 0 && q.progress > 0}
+            />
+          );
+        })}
       </div>
 
       {/* Event Feed */}
@@ -372,7 +420,7 @@ function ColonySidebar() {
         <div className="t-eyebrow">LIVE FEED</div>
       </div>
       <div style={{ overflowY: 'auto', flex: 1 }}>
-        {window.GameData.EVENT_FEED.slice(0, 6).map(e => (
+        {events.slice(0, 8).map(e => (
           <div key={e.id} style={{
             padding: '8px 14px',
             borderBottom: '1px solid var(--line-soft)',
@@ -391,7 +439,7 @@ function ColonySidebar() {
                   : 'var(--signal)',
                 marginTop: 4,
               }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: 'var(--fg-40)' }}>{e.t}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: 'var(--fg-40)' }}>T+{e.day}</span>
             </div>
             <div style={{ color: 'var(--fg-80)', lineHeight: 1.4 }}>{e.text}</div>
           </div>

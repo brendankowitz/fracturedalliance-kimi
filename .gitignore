@@ -1,0 +1,13 @@
+# Dependencies / build output
+node_modules/
+dist/
+dist-ssr/
+
+# Tooling artifacts
+.playwright-mcp/
+*.log
+*.local
+
+# OS junk
+.DS_Store
+Thumbs.db
