@@ -187,3 +187,63 @@ describe('gameStore', () => {
     expect(result.current.asteroids[0].resources.ores.selenium).toBe(2);
   });
 });
+
+describe('gameStore.newMatch', () => {
+  it('resets world state wholesale and enters the sector screen', () => {
+    // Dirty the store: advance state, buy a blueprint, place a building, push an event.
+    useGameStore.setState({ selectedAsteroid: 'arch-i', paused: false });
+    useGameStore.getState().advanceTick();
+    useGameStore.getState().purchaseBlueprint('drillboss', 100);
+    useGameStore.getState().placeBuilding('2,2', 'power1');
+    useGameStore.setState({
+      events: [{ id: 1, t: 'T+0', kind: 'warn', text: 'old news' }],
+      suspicion: 90,
+      reputation: { kryll: 99 },
+      federationStanding: 5,
+      screen: 'menu',
+    });
+    const dirtyTick = useGameStore.getState().tick;
+    expect(dirtyTick).toBeGreaterThan(0);
+
+    useGameStore.getState().newMatch();
+
+    const state = useGameStore.getState();
+    expect(state.screen).toBe('sector');
+    expect(state.tick).toBe(0);
+    expect(state.treasury).toBe(142840);
+    expect(state.events).toEqual([]);
+    expect(state.blueprintsOwned).toEqual(['mk2mine', 'mk2deep', 'seismic', 'hep', 'powamp', 'sensor']);
+    expect(state.suspicion).toBe(42);
+    expect(state.reputation).toEqual({ kryll: -42, motkaj: -18, achar: 64, brakkat: 8, rigal: 38, mauna: -80 });
+    expect(state.federationStanding).toBe(62);
+    expect(state.selectedAsteroid).toBe('arch-i');
+    // The building placed before the reset is gone.
+    const archI = state.asteroids.find((a) => a.id === 'arch-i')!;
+    expect(archI.placedBuildings['2,2']).toBeUndefined();
+    expect(archI.placedBuildings['4,4']).toEqual({ kind: 'cpu' });
+  });
+
+  it('applies the selected scenario treasury modifier', () => {
+    useGameStore.getState().newMatch('rush');
+    expect(useGameStore.getState().treasury).toBe(71420); // 142840 × 0.5
+    useGameStore.getState().newMatch('expedition');
+    expect(useGameStore.getState().treasury).toBe(142840);
+  });
+
+  it('preserves settings and save slots across a new match', () => {
+    const settingsBefore = useGameStore.getState().settings;
+    const savesBefore = useGameStore.getState().saves;
+    useGameStore.getState().newMatch();
+    expect(useGameStore.getState().settings).toBe(settingsBefore);
+    expect(useGameStore.getState().saves).toBe(savesBefore);
+  });
+
+  it('two consecutive matches are independent worlds', () => {
+    useGameStore.getState().newMatch();
+    const first = useGameStore.getState().asteroids;
+    useGameStore.getState().newMatch();
+    const second = useGameStore.getState().asteroids;
+    expect(second).not.toBe(first);
+    expect(second.find((a) => a.id === 'arch-i')).not.toBe(first.find((a) => a.id === 'arch-i'));
+  });
+});

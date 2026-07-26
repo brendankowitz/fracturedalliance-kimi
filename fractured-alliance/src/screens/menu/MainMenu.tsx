@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ACHIEVEMENTS } from '../../sim/achievements';
+import { SCENARIOS as SCENARIO_DEFS, DEFAULT_SCENARIO_ID, BASE_TREASURY } from '../../sim/worldFactory';
 import { simDate } from '../../utils/simDate';
 
 interface Scenario {
@@ -20,14 +21,15 @@ const SCENARIOS: Scenario[] = [
 ];
 
 export function MainMenu() {
-  const [hoveredScenario, setHovered] = useState('expedition');
+  const [selectedScenario, setSelectedScenario] = useState(DEFAULT_SCENARIO_ID);
   const setScreen = useGameStore((s) => s.setScreen);
+  const newMatch = useGameStore((s) => s.newMatch);
   const saves = useGameStore((s) => s.saves);
   const loadSave = useGameStore((s) => s.loadSave);
   const achievements = useGameStore((s) => s.achievements);
 
   const handleEnter = () => {
-    setScreen('sector');
+    newMatch(selectedScenario);
   };
 
   const handleContinue = () => {
@@ -100,10 +102,13 @@ export function MainMenu() {
         <div>
           <div className="t-eyebrow">[ SCENARIO ]</div>
           <div style={{ display: 'grid', gap: 6, marginTop: 12 }}>
-            {SCENARIOS.map((s) => (
+            {SCENARIOS.map((s) => {
+              const def = SCENARIO_DEFS[s.id];
+              const selected = selectedScenario === s.id;
+              return (
               <button
                 key={s.id}
-                onClick={() => setHovered(s.id)}
+                onClick={() => setSelectedScenario(s.id)}
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr auto auto',
@@ -111,23 +116,31 @@ export function MainMenu() {
                   gap: 14,
                   padding: '10px 14px',
                   textAlign: 'left',
-                  background: hoveredScenario === s.id ? 'var(--bg-elev)' : 'transparent',
-                  border: '1px solid ' + (hoveredScenario === s.id ? 'var(--warn-dim)' : 'var(--line-soft)'),
+                  background: selected ? 'var(--bg-elev)' : 'transparent',
+                  border: '1px solid ' + (selected ? 'var(--warn-dim)' : 'var(--line-soft)'),
                   borderLeftWidth: 3,
-                  borderLeftColor: hoveredScenario === s.id ? 'var(--warn)' : 'transparent',
+                  borderLeftColor: selected ? 'var(--warn)' : 'transparent',
                   cursor: 'pointer',
                 }}
               >
                 <div>
                   <div style={{ fontSize: 14, color: 'var(--fg-100)' }}>{s.name}</div>
-                  {hoveredScenario === s.id && (
-                    <div className="t-meta" style={{ marginTop: 4 }}>{s.desc}</div>
+                  {selected && (
+                    <div className="t-meta" style={{ marginTop: 4 }}>
+                      {s.desc}
+                      {def && (
+                        <span style={{ color: 'var(--fg-40)' }}>
+                          {' '}— start ₡ {Math.round(BASE_TREASURY * def.treasuryModifier).toLocaleString('en-US')} (×{def.treasuryModifier})
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="tag warn">{s.diff}</div>
                 <div className="t-meta">{s.len}</div>
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
 
