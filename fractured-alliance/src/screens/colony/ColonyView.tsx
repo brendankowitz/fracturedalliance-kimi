@@ -61,8 +61,11 @@ export function ColonyView() {
       return;
     }
     setInspectedCell(null);
-    placeBuilding(key, sel.id);
-    place();
+    if (placeBuilding(key, sel.id)) {
+      place();
+    } else {
+      error();
+    }
   };
 
   return (

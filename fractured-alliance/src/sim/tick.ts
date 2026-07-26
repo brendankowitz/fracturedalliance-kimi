@@ -66,6 +66,7 @@ export function tickAsteroid(state: AsteroidState, _tick: number): AsteroidState
       if (!/^\d+,\d+$/.test(cellKey)) {
         // Invalid cell format — remove from queue or mark disabled
         next.buildQueue.shift();
+        if (next.buildQueue[0]) next.buildQueue[0].active = true;
       } else {
         const building = next.placedBuildings[cellKey];
         if (building) {
@@ -73,6 +74,7 @@ export function tickAsteroid(state: AsteroidState, _tick: number): AsteroidState
           if (active.pct >= 100) {
             building.constructing = false;
             next.buildQueue.shift();
+            if (next.buildQueue[0]) next.buildQueue[0].active = true;
             if (building.kind === 'shipyard') {
               const scoutDef = SHIP_CLASSES.find((s) => s.id === 'scout');
               if (scoutDef) {

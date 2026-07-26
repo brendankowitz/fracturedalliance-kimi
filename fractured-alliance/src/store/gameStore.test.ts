@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useGameStore } from './gameStore';
+import { useGameStore, intervalForSpeed } from './gameStore';
 
 describe('gameStore', () => {
   beforeEach(() => {
@@ -117,6 +117,55 @@ describe('gameStore', () => {
     useGameStore.getState().placeBuilding('2,2', 'mine2');
     const asteroid = useGameStore.getState().asteroids[0];
     expect(asteroid.placedBuildings['2,2']).toEqual({ kind: 'mine2', constructing: true, progress: 0 });
+  });
+
+  it('placeBuilding charges cost and queues construction when affordable', () => {
+    useGameStore.setState({ selectedAsteroid: 'arch-i', treasury: 100000 });
+    const result = useGameStore.getState().placeBuilding('2,2', 'power1');
+    expect(result).toBe(true);
+    const state = useGameStore.getState();
+    expect(state.treasury).toBe(99300); // 100000 - 700
+    const asteroid = state.asteroids[0];
+    expect(asteroid.placedBuildings['2,2']).toEqual({ kind: 'power1', constructing: true, progress: 0 });
+    const entry = asteroid.buildQueue[asteroid.buildQueue.length - 1];
+    expect(entry).toEqual({ name: 'Power Plant', cell: '[2,2]', pct: 0, etaDays: 5, active: false });
+  });
+
+  it('placeBuilding marks the queue entry active when the queue was empty', () => {
+    useGameStore.setState({ selectedAsteroid: 'arch-i', treasury: 100000 });
+    useGameStore.setState((state) => ({
+      asteroids: [{ ...state.asteroids[0], buildQueue: [] }],
+    }));
+    const result = useGameStore.getState().placeBuilding('2,2', 'power1');
+    expect(result).toBe(true);
+    const queue = useGameStore.getState().asteroids[0].buildQueue;
+    expect(queue).toHaveLength(1);
+    expect(queue[0]).toEqual({ name: 'Power Plant', cell: '[2,2]', pct: 0, etaDays: 5, active: true });
+  });
+
+  it('placeBuilding is rejected when treasury is insufficient', () => {
+    useGameStore.setState({ selectedAsteroid: 'arch-i', treasury: 100 });
+    const before = useGameStore.getState().asteroids;
+    const result = useGameStore.getState().placeBuilding('2,2', 'power1');
+    expect(result).toBe(false);
+    const state = useGameStore.getState();
+    expect(state.treasury).toBe(100);
+    expect(state.asteroids).toBe(before);
+    expect(state.asteroids[0].placedBuildings['2,2']).toBeUndefined();
+  });
+
+  it('placeBuilding is rejected for an unknown building kind', () => {
+    useGameStore.setState({ selectedAsteroid: 'arch-i', treasury: 100000 });
+    const result = useGameStore.getState().placeBuilding('2,2', 'death-star');
+    expect(result).toBe(false);
+    expect(useGameStore.getState().treasury).toBe(100000);
+    expect(useGameStore.getState().asteroids[0].placedBuildings['2,2']).toBeUndefined();
+  });
+
+  it('intervalForSpeed scales the base 6000ms tick interval', () => {
+    expect(intervalForSpeed(1)).toBe(6000);
+    expect(intervalForSpeed(8)).toBe(750);
+    expect(intervalForSpeed(0.5)).toBe(12000);
   });
 
   it('buyOre deducts treasury and adds ore', () => {

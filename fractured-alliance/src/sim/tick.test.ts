@@ -102,4 +102,38 @@ describe('tickAsteroid', () => {
     expect(result.fleets).toHaveLength(1);
     expect(result.fleets[0].ships[0].classId).toBe('scout');
   });
+
+  it('completes the active queue item and auto-activates the next one', () => {
+    const asteroid = makeAsteroid();
+    asteroid.placedBuildings['0,0'] = { kind: 'power1', constructing: true, progress: 0.99 };
+    asteroid.placedBuildings['0,1'] = { kind: 'mine1', constructing: true, progress: 0 };
+    asteroid.buildQueue = [
+      { name: 'Power Plant', cell: '[0,0]', pct: 99, etaDays: 0, active: true },
+      { name: 'Mine Mk1', cell: '[0,1]', pct: 0, etaDays: 4, active: false },
+    ];
+
+    const result = tickAsteroid(asteroid, 1);
+    expect(result.placedBuildings['0,0'].constructing).toBe(false);
+    expect(result.buildQueue).toHaveLength(1);
+    expect(result.buildQueue[0].name).toBe('Mine Mk1');
+    expect(result.buildQueue[0].active).toBe(true);
+  });
+
+  it('advances a queued player building over multiple ticks until completion', () => {
+    let asteroid = makeAsteroid();
+    asteroid.placedBuildings['0,0'] = { kind: 'power1', constructing: true, progress: 0 };
+    asteroid.buildQueue = [{ name: 'Power Plant', cell: '[0,0]', pct: 0, etaDays: 1, active: true }];
+
+    // 1 day = 30 ticks; power1 gives +10 power once constructed
+    for (let i = 0; i < 30; i++) {
+      asteroid = tickAsteroid(asteroid, i + 1);
+      expect(asteroid.placedBuildings['0,0'].constructing).toBe(true);
+    }
+    asteroid = tickAsteroid(asteroid, 31);
+    expect(asteroid.placedBuildings['0,0'].constructing).toBe(false);
+    expect(asteroid.buildQueue).toHaveLength(0);
+    // Power is summed at the start of the tick, so output appears the tick after completion
+    asteroid = tickAsteroid(asteroid, 32);
+    expect(asteroid.resources.power).toBe(10);
+  });
 });

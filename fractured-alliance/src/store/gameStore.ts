@@ -8,7 +8,7 @@ import { proposeTreaty as proposeTreatySim, breakTreaty as breakTreatySim } from
 import { serializeWorld, deserializeWorld } from '../sim/serialize';
 import { persistSave, loadSaveData, loadSettings, persistSettings, loadSaves } from './saveLoad';
 import { checkAchievements } from '../sim/achievements';
-import { ASTEROIDS, AGENTS, RACES } from '../data/gameData';
+import { ASTEROIDS, AGENTS, RACES, BUILDINGS } from '../data/gameData';
 import { createRelations } from '../sim/diplomacy';
 import { resolveMission } from '../sim/espionage';
 
@@ -43,7 +43,7 @@ interface GameState {
   setDifficulty: (d: Difficulty) => void;
   setSelectedAsteroid: (id: string) => void;
   setSelectedBuilding: (id: string | null) => void;
-  placeBuilding: (cell: string, kind: string) => void;
+  placeBuilding: (cell: string, kind: string) => boolean;
   purchaseBlueprint: (id: string, cost: number) => boolean;
   updateReputation: (raceId: string, delta: number) => void;
   addSuspicion: (amount: number) => void;
@@ -244,19 +244,33 @@ export const useGameStore = create<GameState>((set, get) => ({
   setSelectedBuilding: (id) => set({ selectedBuilding: id }),
 
   placeBuilding: (cell, kind) => {
-    set((state) => {
-      const idx = state.asteroids.findIndex(a => a.id === state.selectedAsteroid);
-      if (idx === -1) return state;
-      const next = [...state.asteroids];
-      next[idx] = {
-        ...next[idx],
-        placedBuildings: {
-          ...next[idx].placedBuildings,
-          [cell]: { kind, constructing: true, progress: 0 },
+    const state = get();
+    const def = BUILDINGS.find((b) => b.id === kind);
+    if (!def) return false;
+    if (state.treasury < def.cost) return false;
+    const idx = state.asteroids.findIndex((a) => a.id === state.selectedAsteroid);
+    if (idx === -1) return false;
+    const asteroid = state.asteroids[idx];
+    const next = [...state.asteroids];
+    next[idx] = {
+      ...asteroid,
+      placedBuildings: {
+        ...asteroid.placedBuildings,
+        [cell]: { kind, constructing: true, progress: 0 },
+      },
+      buildQueue: [
+        ...asteroid.buildQueue,
+        {
+          name: def.name,
+          cell: `[${cell}]`,
+          pct: 0,
+          etaDays: def.build,
+          active: asteroid.buildQueue.length === 0,
         },
-      };
-      return { asteroids: next };
-    });
+      ],
+    };
+    set({ treasury: state.treasury - def.cost, asteroids: next });
+    return true;
   },
 
   purchaseBlueprint: (id, cost) => {
@@ -395,18 +409,34 @@ export const useGameStore = create<GameState>((set, get) => ({
 }));
 
 // Auto-tick loop
-let intervalId: ReturnType<typeof setInterval> | null = null;
+const BASE_TICK_MS = 6000;
+
+export function intervalForSpeed(speed: number): number {
+  return BASE_TICK_MS / speed;
+}
+
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
 export function startTickLoop() {
-  if (intervalId) clearInterval(intervalId);
-  intervalId = setInterval(() => {
-    useGameStore.getState().advanceTick();
-  }, 6000);
+  if (timeoutId) clearTimeout(timeoutId);
+  const schedule = () => {
+    // Read speed at each schedule so mid-game speed changes apply
+    // without restarting the loop.
+    timeoutId = setTimeout(() => {
+      try {
+        useGameStore.getState().advanceTick();
+      } finally {
+        // Keep the chain alive even if a tick throws (setInterval parity).
+        schedule();
+      }
+    }, intervalForSpeed(useGameStore.getState().speed));
+  };
+  schedule();
 }
 
 export function stopTickLoop() {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+    timeoutId = null;
   }
 }
