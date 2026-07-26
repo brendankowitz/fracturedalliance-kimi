@@ -102,9 +102,11 @@ export function tickAsteroid(state: AsteroidState, _tick: number): AsteroidState
     next.resources.food = Math.floor(next.resources.food * 0.5);
   }
   if (next.resources.happiness < 10) {
-    // Secession: clear buildings
+    // Secession: the colony declares independence — buildings are
+    // abandoned and ownership is lost.
     next.placedBuildings = {};
     next.buildQueue = [];
+    next.ownerId = null;
   }
 
   // Asteroid stability decay
@@ -142,7 +144,17 @@ export function tickWorld(world: WorldState): { world: WorldState; events: SimEv
   const nextMarket = tickMarket(nextWorldState.market, nextTick);
 
   // Generate events based on state changes
-  for (const asteroid of nextAsteroids) {
+  for (let i = 0; i < nextAsteroids.length; i++) {
+    const asteroid = nextAsteroids[i];
+    const before = nextWorldState.asteroids[i];
+    if (before.ownerId !== null && asteroid.ownerId === null) {
+      newEvents.push({
+        id: Date.now() + Math.random(),
+        t: formatTick(nextTick),
+        kind: 'crit',
+        text: `${asteroid.id}: COLONY SECEDED — declared independence from ${before.ownerId}.`,
+      });
+    }
     if (asteroid.resources.power < 0) {
       newEvents.push({
         id: Date.now() + Math.random(),

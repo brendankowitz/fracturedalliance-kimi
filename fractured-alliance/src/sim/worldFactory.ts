@@ -1,4 +1,4 @@
-import type { Difficulty } from '../types';
+import type { Difficulty, MatchVerdict } from '../types';
 import type { AsteroidState, SimEvent } from './types';
 import type { MarketState } from './market';
 import type { RaceRelations } from './diplomacy';
@@ -29,6 +29,12 @@ export const STARTER_BLUEPRINTS = ['mk2mine', 'mk2deep', 'seismic', 'hep', 'powa
 const START_SUSPICION = 42;
 const START_FEDERATION_STANDING = 62;
 
+/** Race id of the player corporation. */
+export const PLAYER_ID = 'helion';
+
+/** Economic victory: match is won when the treasury reaches this at a tick boundary. */
+export const VICTORY_TREASURY = 500_000;
+
 // Legacy flat reputation fixture — mirrors the historic initial store values.
 // Relations (per-race) are the real model; this record is kept in sync until M4.
 const START_REPUTATION: Record<string, number> = {
@@ -52,6 +58,8 @@ export interface NewMatchState {
   federationStanding: number;
   market: MarketState;
   relations: Record<string, RaceRelations>;
+  verdict: MatchVerdict | null;
+  verdictCause: string | null;
 }
 
 const EMPTY_ORES = () => ({
@@ -172,5 +180,7 @@ export function createNewMatch(scenarioId: string = DEFAULT_SCENARIO_ID): NewMat
     relations: Object.fromEntries(
       RACES.filter((r) => r.id !== 'helion').map((r) => [r.id, createRelations(r.id)])
     ),
+    verdict: null,
+    verdictCause: null,
   };
 }

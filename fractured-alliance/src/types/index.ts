@@ -10,7 +10,10 @@ export type OreKind =
   | 'bytanium' | 'korellium' | 'dragonium' | 'traxium' | 'nexos';
 
 export type ScreenId =
-  | 'menu' | 'sector' | 'colony' | 'scitek' | 'diplomacy' | 'trade' | 'combat' | 'espionage';
+  | 'menu' | 'sector' | 'colony' | 'scitek' | 'diplomacy' | 'trade' | 'combat' | 'espionage'
+  | 'verdict';
+
+export type MatchVerdict = 'won' | 'lost';
 
 export type TreatyKind =
   | 'nonAggression' | 'noCovert' | 'trade' | 'openBorders'

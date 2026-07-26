@@ -11,13 +11,13 @@ export interface SaveData {
   stamp: string;
 }
 
-export function serializeWorld(world: WorldState, name: string): string {
+export function serializeWorld(world: WorldState, name: string, verdict: string | null = null): string {
   const data: SaveData = {
     version: SCHEMA_VERSION,
     world,
     name,
     day: Math.floor(world.tick / 30),
-    verdict: null,
+    verdict,
     stamp: new Date().toISOString(),
   };
   return JSON.stringify(data);

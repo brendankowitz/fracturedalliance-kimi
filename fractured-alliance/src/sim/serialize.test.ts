@@ -31,4 +31,18 @@ describe('serializeWorld', () => {
     const result = deserializeWorld('not-json');
     expect(result.success).toBe(false);
   });
+
+  it('writes verdict as null by default', () => {
+    const json = serializeWorld(makeWorld(), 'Test Save');
+    const result = deserializeWorld(json);
+    expect(result.success).toBe(true);
+    expect(result.data?.verdict).toBeNull();
+  });
+
+  it('round-trips a verdict', () => {
+    const json = serializeWorld(makeWorld(), 'Endgame', 'Won');
+    const result = deserializeWorld(json);
+    expect(result.success).toBe(true);
+    expect(result.data?.verdict).toBe('Won');
+  });
 });

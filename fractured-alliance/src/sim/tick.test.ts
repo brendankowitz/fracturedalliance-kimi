@@ -136,4 +136,15 @@ describe('tickAsteroid', () => {
     asteroid = tickAsteroid(asteroid, 32);
     expect(asteroid.resources.power).toBe(10);
   });
+
+  it('secedes when happiness falls below 10, clearing buildings and ownership', () => {
+    const asteroid = makeAsteroid();
+    asteroid.resources.happiness = 5;
+    asteroid.placedBuildings['0,0'] = { kind: 'mine1' };
+
+    const result = tickAsteroid(asteroid, 1);
+    expect(result.placedBuildings).toEqual({});
+    expect(result.buildQueue).toEqual([]);
+    expect(result.ownerId).toBeNull();
+  });
 });

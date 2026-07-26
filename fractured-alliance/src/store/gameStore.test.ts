@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useGameStore, intervalForSpeed } from './gameStore';
+import { VICTORY_TREASURY } from '../sim/worldFactory';
 
 describe('gameStore', () => {
   beforeEach(() => {
@@ -245,5 +246,90 @@ describe('gameStore.newMatch', () => {
     const second = useGameStore.getState().asteroids;
     expect(second).not.toBe(first);
     expect(second.find((a) => a.id === 'arch-i')).not.toBe(first.find((a) => a.id === 'arch-i'));
+  });
+});
+
+describe('gameStore verdict', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    useGameStore.getState().newMatch();
+  });
+
+  it('triggers economic victory when the treasury reaches the threshold at a tick boundary', () => {
+    useGameStore.setState({ treasury: VICTORY_TREASURY, paused: false });
+    useGameStore.getState().advanceTick();
+    const state = useGameStore.getState();
+    expect(state.verdict).toBe('won');
+    expect(state.verdictCause).toBe('Economic victory — ₡500,000 treasury');
+    expect(state.screen).toBe('verdict');
+    expect(state.paused).toBe(true);
+  });
+
+  it('does not trigger victory below the threshold', () => {
+    useGameStore.setState({ treasury: VICTORY_TREASURY - 1, paused: false, screen: 'sector' });
+    useGameStore.getState().advanceTick();
+    const state = useGameStore.getState();
+    expect(state.verdict).toBeNull();
+    expect(state.screen).toBe('sector');
+  });
+
+  it('triggers defeat when the last colony secedes', () => {
+    // Drive every helion colony to zero happiness with no happiness buildings.
+    useGameStore.setState((s) => ({
+      paused: false,
+      asteroids: s.asteroids.map((a) =>
+        a.ownerId === 'helion'
+          ? { ...a, placedBuildings: {}, buildQueue: [], resources: { ...a.resources, happiness: 0 } }
+          : a
+      ),
+    }));
+    useGameStore.getState().advanceTick();
+    const state = useGameStore.getState();
+    expect(state.asteroids.some((a) => a.ownerId === 'helion')).toBe(false);
+    expect(state.verdict).toBe('lost');
+    expect(state.verdictCause).toBe('All colonies lost');
+    expect(state.screen).toBe('verdict');
+    expect(state.paused).toBe(true);
+    expect(state.events.some((e) => e.kind === 'crit' && e.text.includes('COLONY SECEDED'))).toBe(true);
+  });
+
+  it('checks victory before defeat', () => {
+    useGameStore.setState((s) => ({
+      paused: false,
+      treasury: VICTORY_TREASURY,
+      asteroids: s.asteroids.map((a) => ({ ...a, ownerId: null })),
+    }));
+    useGameStore.getState().advanceTick();
+    expect(useGameStore.getState().verdict).toBe('won');
+  });
+
+  it('does not advance the sim after the match has ended', () => {
+    useGameStore.setState({ treasury: VICTORY_TREASURY, paused: false });
+    useGameStore.getState().advanceTick();
+    const endTick = useGameStore.getState().tick;
+    useGameStore.getState().advanceTick();
+    expect(useGameStore.getState().tick).toBe(endTick);
+    expect(useGameStore.getState().verdict).toBe('won');
+  });
+
+  it('newMatch resets verdict fields', () => {
+    useGameStore.setState({ treasury: VICTORY_TREASURY, paused: false });
+    useGameStore.getState().advanceTick();
+    expect(useGameStore.getState().verdict).toBe('won');
+
+    useGameStore.getState().newMatch();
+    const state = useGameStore.getState();
+    expect(state.verdict).toBeNull();
+    expect(state.verdictCause).toBeNull();
+    expect(state.screen).toBe('sector');
+    expect(state.paused).toBe(false);
+  });
+
+  it('endMatch stamps the verdict onto occupied save slots', () => {
+    useGameStore.getState().saveGame(1, 'mid-match');
+    useGameStore.setState({ treasury: VICTORY_TREASURY, paused: false });
+    useGameStore.getState().advanceTick();
+    const slot = useGameStore.getState().saves.find((s) => s.slot === 1);
+    expect(slot?.verdict).toBe('Won');
   });
 });

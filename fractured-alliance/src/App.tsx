@@ -15,6 +15,7 @@ import { Diplomacy } from './screens/diplomacy/Diplomacy'
 import { Trade } from './screens/trade/Trade'
 import { Combat } from './screens/combat/Combat'
 import { Espionage } from './screens/espionage/Espionage'
+import { Verdict } from './screens/verdict/Verdict'
 
 const FKEY_SCREENS: Record<string, ScreenId> = {
   F1: 'menu',
@@ -96,24 +97,28 @@ function App() {
       case 'trade': return <Trade />
       case 'combat': return <Combat />
       case 'espionage': return <Espionage />
+      case 'verdict': return <Verdict />
       default: return <MainMenu />
     }
   })()
 
+  // Terminal / full-screen views render without the taskbar, icon rail and status bar.
+  const chromeless = screen === 'menu' || screen === 'verdict'
+
   return (
     <div className="stage">
       <div className={`canvas ${settings.scanlines ? 'scanlines' : ''}`} style={{ '--vignette-on': settings.vignette ? 1 : 0 } as React.CSSProperties}>
-        {screen !== 'menu' && <Taskbar dayFlash={dayFlash} />}
+        {!chromeless && <Taskbar dayFlash={dayFlash} />}
         <div style={{
-          gridRow: screen === 'menu' ? '1 / -1' : 'auto',
-          gridColumn: screen === 'menu' ? '1 / -1' : '1 / 2',
+          gridRow: chromeless ? '1 / -1' : 'auto',
+          gridColumn: chromeless ? '1 / -1' : '1 / 2',
           overflow: 'hidden',
           position: 'relative',
         }} key={screen}>
           {screenContent}
         </div>
-        {screen !== 'menu' && <IconRail />}
-        {screen !== 'menu' && (
+        {!chromeless && <IconRail />}
+        {!chromeless && (
           <StatusBar
             message={`Viewing ${screen.toUpperCase()} · select an asteroid to inspect`}
             speed={speed}

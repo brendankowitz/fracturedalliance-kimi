@@ -64,3 +64,26 @@ export function loadSaveData(slot: number): SaveData | null {
     return null;
   }
 }
+
+/**
+ * Stamp a match verdict ('Won' / 'Lost') onto every non-empty save slot.
+ * Called when a match ends so the menu's save table shows the outcome.
+ */
+export function persistVerdict(verdict: string) {
+  try {
+    const saves = loadSaves();
+    const occupied = saves.filter((s) => s.day !== null && s.day !== undefined);
+    if (occupied.length === 0) return;
+    for (const s of occupied) {
+      s.verdict = verdict;
+      const data = loadSaveData(s.slot);
+      if (data) {
+        data.verdict = verdict;
+        localStorage.setItem(`fa-save-${s.slot}`, JSON.stringify(data));
+      }
+    }
+    localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
+  } catch (e) {
+    console.error('Failed to persist verdict:', e);
+  }
+}

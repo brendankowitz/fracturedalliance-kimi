@@ -1,15 +1,15 @@
 import { create } from 'zustand';
-import type { ScreenId, GameSettings, SaveSlot, OreKind, TreatyKind, Difficulty } from '../types';
+import type { ScreenId, GameSettings, SaveSlot, OreKind, TreatyKind, Difficulty, MatchVerdict } from '../types';
 import type { AsteroidState, SimEvent, WorldState } from '../sim/types';
 import type { MarketState } from '../sim/market';
 import { tickWorld } from '../sim/tick';
 import { buyOre as buyOreSim, sellOre as sellOreSim } from '../sim/market';
 import { proposeTreaty as proposeTreatySim, breakTreaty as breakTreatySim } from '../sim/diplomacy';
 import { serializeWorld, deserializeWorld } from '../sim/serialize';
-import { persistSave, loadSaveData, loadSettings, persistSettings, loadSaves } from './saveLoad';
+import { persistSave, loadSaveData, loadSettings, persistSettings, loadSaves, persistVerdict } from './saveLoad';
 import { checkAchievements } from '../sim/achievements';
 import { AGENTS, BUILDINGS } from '../data/gameData';
-import { createNewMatch } from '../sim/worldFactory';
+import { createNewMatch, PLAYER_ID, VICTORY_TREASURY } from '../sim/worldFactory';
 import { resolveMission } from '../sim/espionage';
 
 interface GameState {
@@ -32,6 +32,8 @@ interface GameState {
   market: MarketState;
   relations: Record<string, import('../sim/diplomacy').RaceRelations>;
   achievements: string[];
+  verdict: MatchVerdict | null;
+  verdictCause: string | null;
   proposeTreaty: (raceId: string, treaty: TreatyKind) => void;
   breakTreaty: (raceId: string, treaty: TreatyKind) => void;
 
@@ -40,6 +42,7 @@ interface GameState {
   setSpeed: (s: number) => void;
   advanceTick: () => void;
   newMatch: (scenarioId?: string) => void;
+  endMatch: (verdict: MatchVerdict, cause: string) => void;
   setSettings: (s: Partial<GameSettings>) => void;
   setDifficulty: (d: Difficulty) => void;
   setSelectedAsteroid: (id: string) => void;
@@ -88,6 +91,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   market: initialMatch.market,
   relations: initialMatch.relations,
   achievements: [],
+  verdict: null,
+  verdictCause: null,
 
   setScreen: (s) => set({ screen: s }),
   setPaused: (p) => set({ paused: p }),
@@ -104,9 +109,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
+  endMatch: (verdict, cause) => {
+    // Stamp the outcome onto any occupied save slots, then show the verdict.
+    persistVerdict(verdict === 'won' ? 'Won' : 'Lost');
+    set({
+      verdict,
+      verdictCause: cause,
+      screen: 'verdict',
+      paused: true,
+      saves: loadSaves(),
+    });
+  },
+
   advanceTick: () => {
     const state = get();
-    if (state.paused) return;
+    if (state.paused || state.verdict !== null) return;
 
     const world = tickWorld({
       tick: state.tick,
@@ -138,6 +155,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       federationStanding: world.world.federationStanding,
       market: world.world.market,
     });
+
+    // Win/lose evaluation at the tick boundary: victory first, then defeat.
+    if (world.world.treasury >= VICTORY_TREASURY) {
+      get().endMatch('won', `Economic victory — ₡${VICTORY_TREASURY.toLocaleString('en-US')} treasury`);
+    } else if (!world.world.asteroids.some((a) => a.ownerId === PLAYER_ID)) {
+      get().endMatch('lost', 'All colonies lost');
+    }
   },
 
   setSettings: (s) => {
@@ -239,6 +263,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       events: parsed.data.world.events,
       market: parsed.data.world.market,
       relations: parsed.data.world.relations,
+      verdict: null,
+      verdictCause: null,
     });
   },
   saveGame: (slot: number, name: string) => {
@@ -255,7 +281,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       market: state.market,
       relations: state.relations,
     };
-    const json = serializeWorld(world, name);
+    const verdict = state.verdict === 'won' ? 'Won' : state.verdict === 'lost' ? 'Lost' : null;
+    const json = serializeWorld(world, name, verdict);
     const data = deserializeWorld(json).data!;
     persistSave(slot, data);
     set({ saves: loadSaves() });
